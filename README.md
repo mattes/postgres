@@ -1,9 +1,16 @@
-# Postgres
+# Postgres [![GoDoc](https://godoc.org/github.com/mattes/postgres?status.svg)](https://godoc.org/github.com/mattes/postgres)
 
 Postgres wraps [github.com/lib/pq](https://github.com/lib/pq) and implements
 a set of new features on top of it:
 
-* Get, Filter, Insert, Update, Save and Delete convenience functions
+* [Get](https://godoc.org/github.com/mattes/postgres#example-Postgres-Get),
+  [Filter](https://godoc.org/github.com/mattes/postgres#example-Postgres-Filter)
+  (with [untrusted input](https://godoc.org/github.com/mattes/postgres#example-Postgres-Filter-UntrustedQuery)),
+  [Insert](https://godoc.org/github.com/mattes/postgres#example-Postgres-Insert), 
+  [Update](https://godoc.org/github.com/mattes/postgres#example-Postgres-Update), 
+  [Save](https://godoc.org/github.com/mattes/postgres#example-Postgres-Save) and 
+  [Delete](https://godoc.org/github.com/mattes/postgres#example-Postgres-Delete)
+  convenience functions
 * Advanced encoding & decoding between Go and Postgres column types
 * Create tables, indexes and foreign keys for Go structs
 
