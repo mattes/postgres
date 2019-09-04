@@ -1,0 +1,43 @@
+SELECT
+  i.relname :: text AS name,
+  am.amname :: text AS type,
+  ARRAY(
+    SELECT pg_get_indexdef(idx.indexrelid, k + 1, TRUE)
+    FROM generate_subscripts(idx.indkey, 1) AS k ORDER BY k
+  ) AS columns,
+  idx.indisunique AS is_unique,
+  idx.indisprimary AS is_primary,
+  (idx.indexprs IS NOT NULL) OR (idx.indkey::int[] @> array[0]) AS is_functional,
+  idx.indpred IS NOT NULL AS is_partial
+FROM pg_index AS idx
+JOIN pg_class AS i ON i.oid = idx.indexrelid
+JOIN pg_am AS am ON i.relam = am.oid
+JOIN pg_namespace AS ns ON i.relnamespace = ns.OID
+WHERE idx.indrelid = 'test_save_insert_struct' :: REGCLASS
+
+CREATE TEMPORARY TABLE IF NOT EXISTS "test_save_insert_struct" ()
+
+ALTER TABLE "test_save_insert_struct" ADD COLUMN "col1" text not null default ''
+
+ALTER TABLE "test_save_insert_struct" ADD COLUMN "col2" text not null default ''
+
+ALTER TABLE "test_save_insert_struct" ADD COLUMN "col3" text not null default ''
+
+CREATE UNIQUE INDEX CONCURRENTLY "test_save_insert_struct_pk" ON "test_save_insert_struct" ("col1")
+
+ALTER TABLE "test_save_insert_struct" ADD CONSTRAINT "test_save_insert_struct_pk" PRIMARY KEY USING INDEX "test_save_insert_struct_pk"
+
+INSERT INTO "test_save_insert_struct" ("col1", "col2", "col3") VALUES ($1, $2, $3) ON CONFLICT ("col1") DO UPDATE SET ("col2", "col3") = ROW("excluded"."col2", "excluded"."col3") RETURNING "col1", "col2", "col3" ... with args:
+([]interface {}) (len=3) {
+  (*postgres.field)(Col1 = 1 (string)),
+  (*postgres.field)(Col2 = foo (string)),
+  (*postgres.field)(Col3 = bar (string))
+}
+
+
+SELECT "col1", "col2", "col3" FROM "test_save_insert_struct" WHERE "col1" = $1 LIMIT 1 ... with args:
+([]interface {}) (len=1) {
+  (*postgres.field)(Col1 = 1 (string))
+}
+
+

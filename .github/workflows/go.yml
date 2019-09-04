@@ -1,0 +1,29 @@
+name: Go
+on: [push]
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Postgres
+      run: |
+        docker run -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:11
+
+    - name: Set up Go 1.12
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.12
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v1
+
+    - name: Test
+      run: |
+        export GOTEST_POSTGRES_URI=postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        go test -mod=vendor -v -coverprofile=coverage.out
+
+    - name: Coverage
+      run: go tool cover -func=coverage.out

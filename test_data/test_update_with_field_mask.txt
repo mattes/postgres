@@ -1,0 +1,44 @@
+SELECT
+  i.relname :: text AS name,
+  am.amname :: text AS type,
+  ARRAY(
+    SELECT pg_get_indexdef(idx.indexrelid, k + 1, TRUE)
+    FROM generate_subscripts(idx.indkey, 1) AS k ORDER BY k
+  ) AS columns,
+  idx.indisunique AS is_unique,
+  idx.indisprimary AS is_primary,
+  (idx.indexprs IS NOT NULL) OR (idx.indkey::int[] @> array[0]) AS is_functional,
+  idx.indpred IS NOT NULL AS is_partial
+FROM pg_index AS idx
+JOIN pg_class AS i ON i.oid = idx.indexrelid
+JOIN pg_am AS am ON i.relam = am.oid
+JOIN pg_namespace AS ns ON i.relnamespace = ns.OID
+WHERE idx.indrelid = 'test_update_with_field_mask_struct' :: REGCLASS
+
+CREATE TEMPORARY TABLE IF NOT EXISTS "test_update_with_field_mask_struct" ()
+
+ALTER TABLE "test_update_with_field_mask_struct" ADD COLUMN "col1" text not null default ''
+
+ALTER TABLE "test_update_with_field_mask_struct" ADD COLUMN "col2" text not null default ''
+
+ALTER TABLE "test_update_with_field_mask_struct" ADD COLUMN "col3" text not null default ''
+
+CREATE UNIQUE INDEX CONCURRENTLY "test_update_with_field_mask_struct_pk" ON "test_update_with_field_mask_struct" ("col1")
+
+ALTER TABLE "test_update_with_field_mask_struct" ADD CONSTRAINT "test_update_with_field_mask_struct_pk" PRIMARY KEY USING INDEX "test_update_with_field_mask_struct_pk"
+
+INSERT INTO test_update_with_field_mask_struct (col1, col2, col3) VALUES ('1', 'a', 'b'), ('2', 'c', 'd'), ('3', 'e', 'f')
+
+UPDATE "test_update_with_field_mask_struct" SET ("col3") = ROW($1) WHERE "col1" = $2 RETURNING "col1", "col2", "col3" ... with args:
+([]interface {}) (len=2) {
+  (*postgres.field)(Col3 = y (string)),
+  (*postgres.field)(Col1 = 2 (string))
+}
+
+
+SELECT "col1", "col2", "col3" FROM "test_update_with_field_mask_struct" WHERE "col1" = $1 LIMIT 1 ... with args:
+([]interface {}) (len=1) {
+  (*postgres.field)(Col1 = 2 (string))
+}
+
+

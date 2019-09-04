@@ -1,0 +1,118 @@
+SELECT
+  i.relname :: text AS name,
+  am.amname :: text AS type,
+  ARRAY(
+    SELECT pg_get_indexdef(idx.indexrelid, k + 1, TRUE)
+    FROM generate_subscripts(idx.indkey, 1) AS k ORDER BY k
+  ) AS columns,
+  idx.indisunique AS is_unique,
+  idx.indisprimary AS is_primary,
+  (idx.indexprs IS NOT NULL) OR (idx.indkey::int[] @> array[0]) AS is_functional,
+  idx.indpred IS NOT NULL AS is_partial
+FROM pg_index AS idx
+JOIN pg_class AS i ON i.oid = idx.indexrelid
+JOIN pg_am AS am ON i.relam = am.oid
+JOIN pg_namespace AS ns ON i.relnamespace = ns.OID
+WHERE idx.indrelid = 'test_types_struct' :: REGCLASS
+
+CREATE TEMPORARY TABLE IF NOT EXISTS "test_types_struct" ()
+
+ALTER TABLE "test_types_struct" ADD COLUMN "id" integer not null default 0
+
+ALTER TABLE "test_types_struct" ADD COLUMN "string" text not null default ''
+
+ALTER TABLE "test_types_struct" ADD COLUMN "string_slice" text[] null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "string_slice_null" text[] null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "const1" text not null default ''
+
+ALTER TABLE "test_types_struct" ADD COLUMN "const2" text not null default ''
+
+ALTER TABLE "test_types_struct" ADD COLUMN "int" integer not null default 0
+
+ALTER TABLE "test_types_struct" ADD COLUMN "bool_true" boolean not null default false
+
+ALTER TABLE "test_types_struct" ADD COLUMN "bool_false" boolean not null default false
+
+ALTER TABLE "test_types_struct" ADD COLUMN "int_slice" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "int_slice_null" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "embedded_slice" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "embedded_slice_null" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "embedded" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "embedded_zero" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "embedded_null" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "embedded_pointer" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "embedded_null_pointer" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "time" timestamp (6) without time zone
+
+ALTER TABLE "test_types_struct" ADD COLUMN "time_zero" timestamp (6) without time zone
+
+ALTER TABLE "test_types_struct" ADD COLUMN "time_null" timestamp (6) without time zone
+
+ALTER TABLE "test_types_struct" ADD COLUMN "time_pointer" timestamp (6) without time zone
+
+ALTER TABLE "test_types_struct" ADD COLUMN "time_null_pointer" timestamp (6) without time zone
+
+ALTER TABLE "test_types_struct" ADD COLUMN "map" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "map_null" jsonb null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "sql_type" text null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "sql_type_pointer" text null
+
+ALTER TABLE "test_types_struct" ADD COLUMN "sql_type_null_pointer" text null
+
+CREATE UNIQUE INDEX CONCURRENTLY "test_types_struct_pk" ON "test_types_struct" ("id")
+
+ALTER TABLE "test_types_struct" ADD CONSTRAINT "test_types_struct_pk" PRIMARY KEY USING INDEX "test_types_struct_pk"
+
+INSERT INTO "test_types_struct" ("id", "string", "string_slice", "string_slice_null", "const1", "const2", "int", "bool_true", "bool_false", "int_slice", "int_slice_null", "embedded_slice", "embedded_slice_null", "embedded", "embedded_zero", "embedded_null", "embedded_pointer", "embedded_null_pointer", "time", "time_zero", "time_null", "time_pointer", "time_null_pointer", "map", "map_null", "sql_type", "sql_type_pointer", "sql_type_null_pointer") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28) ON CONFLICT ("id") DO UPDATE SET ("string", "string_slice", "string_slice_null", "const1", "const2", "int", "bool_true", "bool_false", "int_slice", "int_slice_null", "embedded_slice", "embedded_slice_null", "embedded", "embedded_zero", "embedded_null", "embedded_pointer", "embedded_null_pointer", "time", "time_zero", "time_null", "time_pointer", "time_null_pointer", "map", "map_null", "sql_type", "sql_type_pointer", "sql_type_null_pointer") = ROW("excluded"."string", "excluded"."string_slice", "excluded"."string_slice_null", "excluded"."const1", "excluded"."const2", "excluded"."int", "excluded"."bool_true", "excluded"."bool_false", "excluded"."int_slice", "excluded"."int_slice_null", "excluded"."embedded_slice", "excluded"."embedded_slice_null", "excluded"."embedded", "excluded"."embedded_zero", "excluded"."embedded_null", "excluded"."embedded_pointer", "excluded"."embedded_null_pointer", "excluded"."time", "excluded"."time_zero", "excluded"."time_null", "excluded"."time_pointer", "excluded"."time_null_pointer", "excluded"."map", "excluded"."map_null", "excluded"."sql_type", "excluded"."sql_type_pointer", "excluded"."sql_type_null_pointer") RETURNING "id", "string", "string_slice", "string_slice_null", "const1", "const2", "int", "bool_true", "bool_false", "int_slice", "int_slice_null", "embedded_slice", "embedded_slice_null", "embedded", "embedded_zero", "embedded_null", "embedded_pointer", "embedded_null_pointer", "time", "time_zero", "time_null", "time_pointer", "time_null_pointer", "map", "map_null", "sql_type", "sql_type_pointer", "sql_type_null_pointer" ... with args:
+([]interface {}) (len=28) {
+  (*postgres.field)(Id = 1 (int)),
+  (*postgres.field)(String = string (string)),
+  (*postgres.field)(StringSlice = [foo bar] ([]string)),
+  (*postgres.field)(StringSliceNull = [] ([]string)),
+  (*postgres.field)(Const1 = test_const (postgres.TestConstType)),
+  (*postgres.field)(Const2 = test_const_2 (string)),
+  (*postgres.field)(Int = 1 (int)),
+  (*postgres.field)(BoolTrue = true (bool)),
+  (*postgres.field)(BoolFalse = false (bool)),
+  (*postgres.field)(IntSlice = [1 2] ([]int)),
+  (*postgres.field)(IntSliceNull = [] ([]int)),
+  (*postgres.field)(EmbeddedSlice = [{Name}] ([]postgres.Embedded)),
+  (*postgres.field)(EmbeddedSliceNull = [] ([]postgres.Embedded)),
+  (*postgres.field)(Embedded = {Name} (postgres.Embedded)),
+  (*postgres.field)(EmbeddedZero = {} (postgres.Embedded)),
+  (*postgres.field)(EmbeddedNull = <nil> (*postgres.Embedded)),
+  (*postgres.field)(EmbeddedPointer = &{Name} (*postgres.Embedded)),
+  (*postgres.field)(EmbeddedNullPointer = <nil> (*postgres.Embedded)),
+  (*postgres.field)(Time = 2019-07-19 16:08:30.123456789 +0100 UTC+1 (time.Time)),
+  (*postgres.field)(TimeZero = 0001-01-01 00:00:00 +0000 UTC (time.Time)),
+  (*postgres.field)(TimeNull = <nil> (*time.Time)),
+  (*postgres.field)(TimePointer = 2019-07-19 16:08:30.123456789 +0000 UTC (*time.Time)),
+  (*postgres.field)(TimeNullPointer = <nil> (*time.Time)),
+  (*postgres.field)(Map = map[Foo:Bar] (map[string]string)),
+  (*postgres.field)(MapNull = map[] (map[string]string)),
+  (*postgres.field)(SqlType = {foobar} (postgres.SqlType)),
+  (*postgres.field)(SqlTypePointer = &{foobar} (*postgres.SqlType)),
+  (*postgres.field)(SqlTypeNullPointer = <nil> (*postgres.SqlType))
+}
+
+
+SELECT "id", "string", "string_slice", "string_slice_null", "const1", "const2", "int", "bool_true", "bool_false", "int_slice", "int_slice_null", "embedded_slice", "embedded_slice_null", "embedded", "embedded_zero", "embedded_null", "embedded_pointer", "embedded_null_pointer", "time", "time_zero", "time_null", "time_pointer", "time_null_pointer", "map", "map_null", "sql_type", "sql_type_pointer", "sql_type_null_pointer" FROM "test_types_struct" WHERE "id" = $1 LIMIT 1 ... with args:
+([]interface {}) (len=1) {
+  (*postgres.field)(Id = 1 (int))
+}
+
+

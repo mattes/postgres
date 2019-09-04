@@ -1,0 +1,37 @@
+SELECT
+  i.relname :: text AS name,
+  am.amname :: text AS type,
+  ARRAY(
+    SELECT pg_get_indexdef(idx.indexrelid, k + 1, TRUE)
+    FROM generate_subscripts(idx.indkey, 1) AS k ORDER BY k
+  ) AS columns,
+  idx.indisunique AS is_unique,
+  idx.indisprimary AS is_primary,
+  (idx.indexprs IS NOT NULL) OR (idx.indkey::int[] @> array[0]) AS is_functional,
+  idx.indpred IS NOT NULL AS is_partial
+FROM pg_index AS idx
+JOIN pg_class AS i ON i.oid = idx.indexrelid
+JOIN pg_am AS am ON i.relam = am.oid
+JOIN pg_namespace AS ns ON i.relnamespace = ns.OID
+WHERE idx.indrelid = 'test_filter_struct' :: REGCLASS
+
+CREATE TEMPORARY TABLE IF NOT EXISTS "test_filter_struct" ()
+
+ALTER TABLE "test_filter_struct" ADD COLUMN "col1" text not null default ''
+
+ALTER TABLE "test_filter_struct" ADD COLUMN "col2" text not null default ''
+
+ALTER TABLE "test_filter_struct" ADD COLUMN "col3" text not null default ''
+
+CREATE UNIQUE INDEX CONCURRENTLY "test_filter_struct_pk" ON "test_filter_struct" ("col1")
+
+ALTER TABLE "test_filter_struct" ADD CONSTRAINT "test_filter_struct_pk" PRIMARY KEY USING INDEX "test_filter_struct_pk"
+
+INSERT INTO test_filter_struct (col1, col2, col3) VALUES ('1', 'a', 'x'), ('2', 'c', 'y'), ('3', 'e', 'x')
+
+SELECT "col1", "col2", "col3" FROM "test_filter_struct" WHERE "col3" = $1 ORDER BY "col2" ASC LIMIT 10 ... with args:
+([]interface {}) (len=1) {
+  (string) (len=1) "x"
+}
+
+
