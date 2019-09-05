@@ -99,6 +99,18 @@ first. To enable zero-downtime deploys, it's recommended to either create a new 
 and write and read from the old and new table or field simultaneously until the deprecated
 versions are stopped and removed.
 
+## Struct tags
+
+This package will pick up `db` struct tags to create migrations and queries for primary keys, index and foreign keys. The following struct tags are supported:
+
+| Struct Tag | Description |
+|-----------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| `db:"pk"` | Create a primary key. Can be used across multiple fields to create a composite primary key. |
+| `db:"references(structName.FieldName)"` | Creates a foreign key. |
+| `db:"index"` | Creates an index for a field. |
+| `db:"index(name)"` | Creates an index with given name. Can be used across multiple fields to create a composite index. |
+| `db:"unique"` | Creates a unique index for a field. |
+| `db:"unique(name)"` | Creates a unique index with given name. Can be used across multiple fields to create composite unique index. |
 
 ## Testing
 
