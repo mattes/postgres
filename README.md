@@ -106,7 +106,7 @@ This package will pick up `db` struct tags to create migrations and queries for 
 | Struct Tag | Description |
 |-----------------------------------------|--------------------------------------------------------------------------------------------------------------|
 | `db:"pk"` | Create a primary key. Can be used across multiple fields to create a composite primary key. |
-| `db:"references(structName.FieldName)"` | Creates a foreign key. |
+| `db:"references(structName.fieldName)"` | Creates a foreign key. |
 | `db:"index"` | Creates an index for a field. |
 | `db:"index(name)"` | Creates an index with given name. Can be used across multiple fields to create a composite index. |
 | `db:"unique"` | Creates a unique index for a field. |
