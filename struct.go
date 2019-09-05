@@ -73,7 +73,7 @@ type field struct {
 	index     bool
 	indexName string
 
-	// reference(table.column)
+	// references(table.column)
 	referencesStruct string
 	referencesFields []string
 }
