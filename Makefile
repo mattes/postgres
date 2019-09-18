@@ -3,7 +3,7 @@ update-naughty-strings:
 	@echo "TODO Remove first empty line in test_data/naughty.b64.json"
 
 benchmark:
-	go test -mod=vendor -benchmem -race -bench .
+	go test -mod=vendor -benchmem -bench .
 
 test:
 	go test -mod=vendor -v -race
