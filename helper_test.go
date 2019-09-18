@@ -31,7 +31,7 @@ func init() {
 	naughtyBytes = loadNaughtyBytes("test_data/naughty.b64.json")
 
 	// initialize database connection and User{} for example_test.go
-	Register("user", &User{})
+	Register(&User{}, "user", "u")
 }
 
 type stdoutLogger struct{}
@@ -75,7 +75,7 @@ func (l *testLogger) Query(query string, duration time.Duration, args ...interfa
 }
 
 func (l *testLogger) Write(t *testing.T, filename string) {
-	t.Logf("warning: writing file: %v", filename)
+	t.Logf("WARNING: writing file: %v", filename)
 	require.NoError(t, ioutil.WriteFile(filename, l.writer.Bytes(), 0664))
 }
 

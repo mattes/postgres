@@ -1,0 +1,12 @@
+DELETE FROM "test_delete_struct_uses_alias_struct" WHERE "col1" = $1 RETURNING "col1", "col2" ... with args:
+([]interface {}) (len=1) {
+  (*postgres.field)(Col1 =  (string))
+}
+
+
+DELETE FROM "my_delete_alias" WHERE "col1" = $1 RETURNING "col1", "col2" ... with args:
+([]interface {}) (len=1) {
+  (*postgres.field)(Col1 =  (string))
+}
+
+

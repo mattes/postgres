@@ -1,0 +1,14 @@
+UPDATE "test_update_struct_uses_alias_struct" SET ("col2") = ROW($1) WHERE "col1" = $2 RETURNING "col1", "col2" ... with args:
+([]interface {}) (len=2) {
+  (*postgres.field)(Col2 =  (string)),
+  (*postgres.field)(Col1 =  (string))
+}
+
+
+UPDATE "my_update_alias" SET ("col2") = ROW($1) WHERE "col1" = $2 RETURNING "col1", "col2" ... with args:
+([]interface {}) (len=2) {
+  (*postgres.field)(Col2 =  (string)),
+  (*postgres.field)(Col1 =  (string))
+}
+
+

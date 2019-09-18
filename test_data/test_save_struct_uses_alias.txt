@@ -1,0 +1,14 @@
+INSERT INTO "test_save_struct_uses_alias_struct" ("col1", "col2") VALUES ($1, $2) ON CONFLICT ("col1") DO UPDATE SET ("col2") = ROW("excluded"."col2") RETURNING "col1", "col2" ... with args:
+([]interface {}) (len=2) {
+  (*postgres.field)(Col1 =  (string)),
+  (*postgres.field)(Col2 =  (string))
+}
+
+
+INSERT INTO "my_save_alias" ("col1", "col2") VALUES ($1, $2) ON CONFLICT ("col1") DO UPDATE SET ("col2") = ROW("excluded"."col2") RETURNING "col1", "col2" ... with args:
+([]interface {}) (len=2) {
+  (*postgres.field)(Col1 =  (string)),
+  (*postgres.field)(Col2 =  (string))
+}
+
+

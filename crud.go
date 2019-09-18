@@ -27,7 +27,7 @@ func getStruct(db db, ctx context.Context, s Struct) error {
 	queryf := "SELECT %v FROM %v WHERE %v LIMIT 1"
 	query := fmt.Sprintf(queryf,
 		mustJoinIdentifiers(r.fields.names()),
-		mustIdentifier(r.name),
+		mustIdentifier(r.alias()),
 		r.fields.wherePrimaryStr(p))
 
 	row := db.QueryRow(ctx, query, p.args(r.fields)...)
@@ -67,7 +67,7 @@ func filterStruct(db db, ctx context.Context, s StructSlice, q *QueryStmt) error
 
 	query := queryf(
 		"SELECT", mustJoinIdentifiers(r.fields.names()),
-		"FROM", mustIdentifier(r.name),
+		"FROM", mustIdentifier(r.alias()),
 		q.queryStr(), // WHERE
 		q.orderStr(), // ORDER BY
 		"LIMIT", q.limit)
@@ -109,7 +109,7 @@ func saveStruct(db db, ctx context.Context, s Struct, fieldMask ...StructFieldNa
 
 	queryf := "INSERT INTO %v (%v) VALUES (%v) ON CONFLICT (%v) DO UPDATE SET (%v) = ROW(%v) RETURNING %v"
 	query := fmt.Sprintf(queryf,
-		mustIdentifier(r.name),
+		mustIdentifier(r.alias()),
 		mustJoinIdentifiers(r.fields.names(fieldMask...)),
 		join(p.assign(r.fields.fieldMask(fieldMask)...)),
 		mustJoinIdentifiers(r.fields.primaryNames()),
@@ -140,7 +140,7 @@ func insertStruct(db db, ctx context.Context, s Struct, fieldMask ...StructField
 
 	queryf := "INSERT INTO %v (%v) VALUES (%v) RETURNING %v"
 	query := fmt.Sprintf(queryf,
-		mustIdentifier(r.name),
+		mustIdentifier(r.alias()),
 		mustJoinIdentifiers(r.fields.names(fieldMask...)),
 		join(p.assign(r.fields.fieldMask(fieldMask)...)),
 		mustJoinIdentifiers(r.fields.names()),
@@ -168,7 +168,7 @@ func updateStruct(db db, ctx context.Context, s Struct, fieldMask ...StructField
 
 	queryf := "UPDATE %v SET (%v) = ROW(%v) WHERE %v RETURNING %v"
 	query := fmt.Sprintf(queryf,
-		mustIdentifier(r.name),
+		mustIdentifier(r.alias()),
 		mustJoinIdentifiers(r.fields.nonPrimaryNames(fieldMask...)),
 		join(p.assign(r.fields.nonPrimary(fieldMask...)...)),
 		r.fields.wherePrimaryStr(p),
@@ -197,7 +197,7 @@ func deleteStruct(db db, ctx context.Context, s Struct) error {
 
 	queryf := "DELETE FROM %v WHERE %v RETURNING %v"
 	query := fmt.Sprintf(queryf,
-		mustIdentifier(r.name),
+		mustIdentifier(r.alias()),
 		r.fields.wherePrimaryStr(p),
 		mustJoinIdentifiers(r.fields.names()))
 

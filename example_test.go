@@ -12,8 +12,8 @@ type Example struct{}
 func ExamplePostgres_Migrate() {
 	db, _ := Open(postgresURI)
 
-	// Register a struct once
-	Register("ex", &Example{})
+	// Register "example" struct with prefix "ex"
+	Register(&Example{}, "example", "ex")
 
 	// Run migrations ...
 	_ = db.Migrate(context.Background())

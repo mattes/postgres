@@ -29,7 +29,9 @@ type User struct {
 }
 
 func init() {
-  postgres.Register("user", &User{})
+  // Register struct &User{} with alias 'user.v1',
+  // and have new ids prefixed with 'user'.
+  postgres.Register(&User{}, "user.v1", "user")
 }
 
 func main() {
@@ -37,11 +39,11 @@ func main() {
   db.Migrate(context.Background())
 
   u := &User{
-    Id:    pg.NewID(&User{}),
+    Id:    pg.NewID(&User{}), // example: user_1R0D8rn6jP870lrtSpgb1y6M5tG
     Name:  "Karl",
     Email: "karl@example.com",
   }
-  db.Insert(context.Background(), u)
+  db.Insert(context.Background(), u) // insert into table user_v1
 
   // ... for more examples, have a look at the docs.
 }

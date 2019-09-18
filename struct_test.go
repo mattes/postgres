@@ -6,6 +6,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type TestRegister_Struct struct{}
+
+func TestRegister(t *testing.T) {
+	require.NotPanics(t, func() { Register(&TestRegister_Struct{}, "", "") })
+
+	// try again and it panics because we cannot register same struct twice
+	require.Panics(t, func() { Register(&TestRegister_Struct{}, "", "") })
+}
+
+type TestRegister_Alias_Struct1 struct{}
+type TestRegister_Alias_Struct2 struct{}
+
+func TestRegister_Alias(t *testing.T) {
+	require.NotPanics(t, func() { Register(&TestRegister_Alias_Struct1{}, "test_register_same_alias", "") })
+
+	// panics because alias is already registered
+	require.Panics(t, func() { Register(&TestRegister_Alias_Struct2{}, "test_register_same_alias", "") })
+}
+
 func Test_UniqueIndexes(t *testing.T) {
 	fields := fields{
 		{name: "a", unique: true},
@@ -111,4 +130,12 @@ func TestParseTag(t *testing.T) {
 
 	_, err = parseTags(`pk(())`)
 	require.Error(t, err)
+}
+
+type TestGlobalStructsName_Struct struct{}
+
+func TestGlobalStructsName(t *testing.T) {
+	expect := "test_global_structs_name_struct"
+	require.Equal(t, expect, globalStructsName(&TestGlobalStructsName_Struct{}))
+	require.Equal(t, expect, globalStructsNameFromString("TestGlobalStructsName_Struct"))
 }

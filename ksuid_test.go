@@ -47,10 +47,21 @@ func TestNewPrefixID(t *testing.T) {
 type TestNewID_Struct struct{}
 
 func TestNewID(t *testing.T) {
-	Register("test_new_id_foobar", &TestNewID_Struct{})
+	Register(&TestNewID_Struct{}, "test_new_id", "my_prefix")
 
 	prefix, id, err := ParseID(NewID(&TestNewID_Struct{}))
 	require.NoError(t, err)
-	require.Equal(t, "test_new_id_foobar", prefix)
+	require.Equal(t, "my_prefix", prefix)
+	require.Len(t, id.String(), 27)
+}
+
+type TestNewID_NoPrefix_Struct struct{}
+
+func TestNewID_NoPrefix(t *testing.T) {
+	Register(&TestNewID_NoPrefix_Struct{}, "test_new_id_no_prefix", "")
+
+	prefix, id, err := ParseID(NewID(&TestNewID_NoPrefix_Struct{}))
+	require.NoError(t, err)
+	require.Equal(t, "", prefix)
 	require.Len(t, id.String(), 27)
 }

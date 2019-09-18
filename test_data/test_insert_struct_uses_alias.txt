@@ -1,0 +1,14 @@
+INSERT INTO "test_insert_struct_uses_alias_struct" ("col1", "col2") VALUES ($1, $2) RETURNING "col1", "col2" ... with args:
+([]interface {}) (len=2) {
+  (*postgres.field)(Col1 =  (string)),
+  (*postgres.field)(Col2 =  (string))
+}
+
+
+INSERT INTO "my_insert_alias" ("col1", "col2") VALUES ($1, $2) RETURNING "col1", "col2" ... with args:
+([]interface {}) (len=2) {
+  (*postgres.field)(Col1 =  (string)),
+  (*postgres.field)(Col2 =  (string))
+}
+
+

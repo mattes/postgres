@@ -1165,7 +1165,7 @@ type TestRegisterAndMigrate_Struct struct {
 }
 
 func TestRegisterAndMigrate(t *testing.T) {
-	Register("test_register_and_migrate", &TestRegisterAndMigrate_Struct{})
+	Register(&TestRegisterAndMigrate_Struct{}, "test_register_and_migrate", "")
 
 	db, err := Open(postgresURI)
 	require.NoError(t, err)
@@ -1218,7 +1218,7 @@ type TestDescribeTableIndexes_Struct struct {
 }
 
 func TestDescribeTableIndexes(t *testing.T) {
-	Register("test_describe_table_indexes", &TestDescribeTableIndexes_Struct{})
+	Register(&TestDescribeTableIndexes_Struct{}, "test_describe_table_indexes_struct", "")
 
 	db, err := Open(postgresURI)
 	require.NoError(t, err)
@@ -1241,7 +1241,7 @@ type TestDescribeTableColumns_Struct struct {
 }
 
 func TestDescribeTableColumns(t *testing.T) {
-	Register("test_describe_table_columns", &TestDescribeTableColumns_Struct{})
+	Register(&TestDescribeTableColumns_Struct{}, "test_describe_table_columns_struct", "")
 
 	db, err := Open(postgresURI)
 	require.NoError(t, err)

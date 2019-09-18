@@ -12,23 +12,24 @@ import (
 var StructTag = "db"
 
 var (
-	structsMu sync.Mutex
+	// structs contains all registered structs, where the key
+	// of the map is the actual lowercase name of the struct.
 	structs   = make(map[string]*metaStruct)
+	structsMu sync.RWMutex
 )
 
-// Register globally registers a struct. Name has to be unique.
-func Register(name string, s Struct) {
-	structsMu.Lock()
-	defer structsMu.Unlock()
-
+// Register registers a struct. Optional alias has to be globally unique.
+// Optional prefixID is used in NewID().
+func Register(s Struct, alias, prefixID string) {
 	if s == nil {
 		panic("Register: struct is nil")
 	}
 
-	name = strings.ToLower(toSnake(name))
+	structsMu.Lock()
+	defer structsMu.Unlock()
 
-	if _, dup := structs[name]; dup {
-		panic(fmt.Sprintf("Register called twice for %T", s))
+	if _, dup := structs[globalStructsName(s)]; dup {
+		panic(fmt.Sprintf("Register: called twice for struct %T", s))
 	}
 
 	x, err := newMetaStruct(s)
@@ -36,7 +37,21 @@ func Register(name string, s Struct) {
 		panic(fmt.Sprintf("Register: %v", err))
 	}
 
-	structs[name] = x
+	// if alias is set, make sure it's globally unique
+	if alias != "" {
+		for _, sx := range structs {
+			if strings.EqualFold(sx.name, alias) {
+				panic(fmt.Sprintf("Register: alias '%v' for struct %T not globally unique", alias, s))
+			}
+		}
+
+		// override name with alias
+		x.name = alias
+	}
+
+	x.prefixID = prefixID
+
+	structs[globalStructsName(s)] = x
 }
 
 // StructFieldName defines a struct's field name where interface{} must be
@@ -50,8 +65,9 @@ type Struct interface{}
 type StructSlice interface{}
 
 type metaStruct struct {
-	name   string
-	fields fields
+	name     string
+	prefixID string
+	fields   fields
 }
 
 type fields []*field
@@ -123,6 +139,14 @@ func mustNewFields(v interface{}, withTags bool) fields {
 		panic(err)
 	}
 	return f
+}
+
+// alias returns name (which could be an alias) from list of registered structs
+func (m *metaStruct) alias() string {
+	if x, ok := structs[globalStructsNameFromString(m.name)]; ok {
+		return x.name
+	}
+	return m.name
 }
 
 // fieldMask returns fields based on given fieldmask
@@ -470,4 +494,12 @@ func parseTags(in string) ([]tag, error) {
 	}
 
 	return tags, nil
+}
+
+func globalStructsName(s Struct) string {
+	return strings.ToLower(toSnake(structName(s)))
+}
+
+func globalStructsNameFromString(s string) string {
+	return strings.ToLower(toSnake(s))
 }

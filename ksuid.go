@@ -10,19 +10,22 @@ import (
 var ErrInvalidId = fmt.Errorf("invalid ID")
 
 // NewID returns a new ramdon ID, prefixed with the registered name of the given struct.
+// Example: `user_1R0D8rn6jP870lrtSpgb1y6M5tG`
 func NewID(s Struct) string {
-	name := structName(s)
-
-	for prefix, x := range structs {
-		if strings.EqualFold(x.name, name) {
-			return toSnake(prefix) + "_" + ksuid.New().String()
-		}
+	if s == nil {
+		panic(fmt.Sprintf("nil struct %T", s))
 	}
 
-	panic(fmt.Sprintf("unknown struct %T", s))
+	x, ok := structs[globalStructsName(s)]
+	if !ok {
+		panic(fmt.Sprintf("unknown prefix for struct %T", s))
+	}
+
+	return NewPrefixID(x.prefixID)
 }
 
 // NewPrefixID returns a new random ID, prefixed with the given prefix.
+// Example: `user_1R0D8rn6jP870lrtSpgb1y6M5tG`
 func NewPrefixID(prefix string) string {
 	if prefix != "" {
 		return toSnake(prefix) + "_" + ksuid.New().String()
@@ -30,7 +33,7 @@ func NewPrefixID(prefix string) string {
 	return ksuid.New().String()
 }
 
-// ParseID parses a ID.
+// ParseID parses a ID like `user_1R0D8rn6jP870lrtSpgb1y6M5tG`.
 func ParseID(id string) (prefix string, kid ksuid.KSUID, err error) {
 	parts := strings.Split(id, "_")
 	if len(parts) == 1 {

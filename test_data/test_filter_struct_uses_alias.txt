@@ -1,0 +1,12 @@
+SELECT "col1", "col2" FROM "test_filter_struct_uses_alias_struct" WHERE "col1" = $1 LIMIT 10 ... with args:
+([]interface {}) (len=1) {
+  (string) (len=3) "foo"
+}
+
+
+SELECT "col1", "col2" FROM "my_filter_alias" WHERE "col1" = $1 LIMIT 10 ... with args:
+([]interface {}) (len=1) {
+  (string) (len=3) "foo"
+}
+
+
