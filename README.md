@@ -53,18 +53,19 @@ This package converts between the following types. A postgres column
 can be null, if the related Go type can be nil. Otherwise Go's zero value
 is used as the postgres default value. Complex Go types are stored as JSON.
 
-| Go type                | Postgres column type            |
-|------------------------|---------------------------------|
-| implements sql.Scanner | text null                       |
-| time.Time              | timestamp (6) without time zone |
-| time.Duration          | bigint                          |
-| []string               | text[] null                     |
-| string                 | text not null default ''        |
-| bool                   | boolean not null default false  |
-| int                    | integer not null default 0      |
-| struct{}               | jsonb null                      |
-| []T                    | jsonb null                      |
-| map[T]T                | jsonb null                      |
+| Go type                         | Postgres column type            |
+|---------------------------------|---------------------------------|
+| implements sql.Scanner          | text null                       |
+| implements postgres.ColumnTyper | "returned value"                |
+| time.Time                       | timestamp (6) without time zone |
+| time.Duration                   | bigint                          |
+| []string                        | text[] null                     |
+| string                          | text not null default ''        |
+| bool                            | boolean not null default false  |
+| int                             | integer not null default 0      |
+| struct{}                        | jsonb null                      |
+| []T                             | jsonb null                      |
+| map[T]T                         | jsonb null                      |
 
 
 ### Migrations for Go structs

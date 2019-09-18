@@ -9,8 +9,18 @@ import (
 	"github.com/lib/pq"
 )
 
+type ColumnTyper interface {
+	ColumnType() string
+}
+
 // columnType returns a postgres column type for a given value
 func columnType(value interface{}) string {
+	if ct, err := callColumnTyper(value); err != nil && err != ErrColumnTyperNotImplemented {
+		panic(err)
+	} else if err == nil {
+		return ct
+	}
+
 	if implementsScanner(reflect.ValueOf(value)) {
 		return "text null"
 	}

@@ -8,11 +8,15 @@ import (
 )
 
 var (
-	valuerReflectType  = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
-	scannerReflectType = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
+	valuerReflectType      = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
+	scannerReflectType     = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
+	columnTyperReflectType = reflect.TypeOf((*ColumnTyper)(nil)).Elem()
 )
 
-var ErrScannerNotImplemented = fmt.Errorf("type does not implement sql.Scanner")
+var (
+	ErrScannerNotImplemented     = fmt.Errorf("type does not implement sql.Scanner")
+	ErrColumnTyperNotImplemented = fmt.Errorf("type does not implement ColumnTyper")
+)
 
 func implementsScanner(v reflect.Value) bool {
 	return v.Type().Implements(scannerReflectType) ||
@@ -37,6 +41,15 @@ func callScanner(dst reflect.Value, value interface{}) error {
 	}
 
 	return ErrScannerNotImplemented
+}
+
+func callColumnTyper(value interface{}) (string, error) {
+	switch x := value.(type) {
+	case ColumnTyper:
+		return x.ColumnType(), nil
+	}
+
+	return "", ErrColumnTyperNotImplemented
 }
 
 // isZero returns true if the given value is zero

@@ -79,9 +79,9 @@ ALTER TABLE "test_types_struct" ADD COLUMN "map_null" jsonb null
 
 ALTER TABLE "test_types_struct" ADD COLUMN "sql_type" text null
 
-ALTER TABLE "test_types_struct" ADD COLUMN "sql_type_pointer" text null
+ALTER TABLE "test_types_struct" ADD COLUMN "sql_type_pointer" date null
 
-ALTER TABLE "test_types_struct" ADD COLUMN "sql_type_null_pointer" text null
+ALTER TABLE "test_types_struct" ADD COLUMN "sql_type_null_pointer" date null
 
 CREATE UNIQUE INDEX CONCURRENTLY "test_types_struct_pk" ON "test_types_struct" ("id")
 
@@ -119,8 +119,8 @@ INSERT INTO "test_types_struct" ("id", "string", "string_slice", "string_slice_n
   (*postgres.field)(DurationNullPointer = <nil> (*time.Duration)),
   (*postgres.field)(Map = map[Foo:Bar] (map[string]string)),
   (*postgres.field)(MapNull = map[] (map[string]string)),
-  (*postgres.field)(SqlType = {foobar} (postgres.SqlType)),
-  (*postgres.field)(SqlTypePointer = &{foobar} (*postgres.SqlType)),
+  (*postgres.field)(SqlType = {2019-08-04} (postgres.SqlType)),
+  (*postgres.field)(SqlTypePointer = &{2019-08-04} (*postgres.SqlType)),
   (*postgres.field)(SqlTypeNullPointer = <nil> (*postgres.SqlType))
 }
 

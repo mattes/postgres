@@ -21,7 +21,9 @@ type SqlType struct {
 
 func (t *SqlType) Scan(v interface{}) error {
 	if t != nil {
-		t.value = fmt.Sprintf("%v", v)
+		// postgres returns `2019-08-04 00:00:00 +0000 +0000`,
+		// so we just take the first 10 characters
+		t.value = fmt.Sprintf("%v", v)[0:10]
 	}
 
 	return nil
@@ -33,6 +35,10 @@ func (t *SqlType) Value() (driver.Value, error) {
 	}
 
 	return t.value, nil
+}
+
+func (t *SqlType) ColumnType() string {
+	return "date null"
 }
 
 type TestConstType string
@@ -127,8 +133,8 @@ func TestEncoding(t *testing.T) {
 		DurationNullPointer: nil,
 		Map:                 map[string]string{"Foo": "Bar"},
 		MapNull:             nil,
-		SqlType:             SqlType{"foobar"},
-		SqlTypePointer:      &SqlType{"foobar"},
+		SqlType:             SqlType{"2019-08-04"},
+		SqlTypePointer:      &SqlType{"2019-08-04"},
 		SqlTypeNullPointer:  nil,
 	}
 
@@ -184,8 +190,8 @@ func TestEncoding(t *testing.T) {
 	assert.Equal(t, (*time.Duration)(nil), tstructx.DurationNullPointer)
 	assert.Equal(t, map[string]string{"Foo": "Bar"}, tstructx.Map)
 	assert.Equal(t, map[string]string(nil), tstructx.MapNull)
-	assert.Equal(t, SqlType{"foobar"}, tstructx.SqlType)
-	assert.Equal(t, &SqlType{"foobar"}, tstructx.SqlTypePointer)
+	assert.Equal(t, SqlType{"2019-08-04"}, tstructx.SqlType)
+	assert.Equal(t, &SqlType{"2019-08-04"}, tstructx.SqlTypePointer)
 	assert.Equal(t, (*SqlType)(nil), tstructx.SqlTypeNullPointer)
 
 	log.Equal(t, "test_data/test_encoding.txt")
