@@ -23,7 +23,7 @@ jobs:
     - name: Test
       run: |
         export GOTEST_POSTGRES_URI=postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-        go test -mod=vendor -v -coverprofile=coverage.out
+        go test -mod=vendor -v -race -coverprofile=coverage.out
 
     - name: Coverage
       run: go tool cover -func=coverage.out
