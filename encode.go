@@ -9,7 +9,10 @@ import (
 	"github.com/lib/pq"
 )
 
+// ColumnTyper is an interface to be implemented by a custom type
 type ColumnTyper interface {
+
+	// ColumnType returns postgres' column type
 	ColumnType() string
 }
 
