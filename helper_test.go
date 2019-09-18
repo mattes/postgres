@@ -24,14 +24,11 @@ func init() {
 	// load GOTEST_POSTGRES_URI from env
 	postgresURI = os.Getenv("GOTEST_POSTGRES_URI")
 	if postgresURI == "" {
-		postgresURI = "postgres://postgres:postgres@localhost:5432/go_postgres_test?sslmode=disable"
+		postgresURI = "postgres://postgres:postgres@localhost:5432/go_postgres_test?sslmode=disable&createTempTables=true"
 	}
 
 	// load naughty bytes
 	naughtyBytes = loadNaughtyBytes("test_data/naughty.b64.json")
-
-	// make sure we are only creating temporary tables in tests
-	createTempTable = true
 
 	// initialize database connection and User{} for example_test.go
 	Register("user", &User{})

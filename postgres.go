@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,9 +24,6 @@ var (
 	// maxAdvisoryLockAttemtps is the max amount of times it tries
 	// to acquire a lock before it panics
 	maxAdvisoryLockAttemtps = 50
-
-	// createTempTable can be set to true in tests to create temporary tables
-	createTempTable bool
 )
 
 type rowScan interface {
@@ -34,14 +33,29 @@ type rowScan interface {
 type Postgres struct {
 	db     *sql.DB
 	Logger Logger
+
+	// createTempTables can be set to true to just create temporary tables,
+	// useful for tests
+	createTempTables bool
 }
 
 // Open creates a new Postgres client.
 //
 // To set a schema, specify `search_path` in URI.
+//
+// To only create temporary tables, i.e. for testing purposes,
+// specify `createTempTables=true` in URI.
 func Open(uri string) (*Postgres, error) {
+	// parse uri
+	extra, err := parseExtraParams(&uri)
+	if err != nil {
+		return nil, err
+	}
+
+	// reset env vars
 	resetEnv()
 
+	// create sql.DB instance
 	db, err := sql.Open("postgres", uri)
 	if err != nil {
 		return nil, err
@@ -55,7 +69,8 @@ func Open(uri string) (*Postgres, error) {
 	}
 
 	p := &Postgres{
-		db: db,
+		db:               db,
+		createTempTables: extra.createTempTables,
 	}
 
 	return p, nil
@@ -355,7 +370,7 @@ func (p *Postgres) truncate(tableName string) error {
 
 func (p *Postgres) createTable(tableName string) error {
 	var queryf string
-	if createTempTable {
+	if p.createTempTables {
 		queryf = "CREATE TEMPORARY TABLE IF NOT EXISTS %v ()"
 	} else {
 		queryf = "CREATE TABLE IF NOT EXISTS %v ()"
@@ -617,4 +632,45 @@ func (p *postgresBool) Scan(value interface{}) error {
 	}
 
 	return nil
+}
+
+type extraParams struct {
+	createTempTables bool
+}
+
+func parseExtraParams(uri *string) (*extraParams, error) {
+	u, err := url.Parse(*uri)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &extraParams{}
+	cleanQuery := make(url.Values)
+
+	for k, values := range u.Query() {
+		switch k {
+
+		case "createTempTables":
+			p.createTempTables, err = strconv.ParseBool(firstUrlValue(values))
+			if err != nil {
+				return nil, err
+			}
+
+		default:
+			cleanQuery[k] = values
+		}
+	}
+
+	// remove extra params from query and set clean uri
+	u.RawQuery = cleanQuery.Encode()
+	*uri = u.String()
+
+	return p, nil
+}
+
+func firstUrlValue(urlValues []string) string {
+	if len(urlValues) > 0 {
+		return urlValues[0]
+	}
+	return ""
 }

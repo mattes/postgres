@@ -116,5 +116,6 @@ This package will pick up `db` struct tags to create migrations and queries for 
 
 ## Testing
 
-Set env variable `GOTEST_POSTGRES_URI` and run `make test`.
+Set env variable `GOTEST_POSTGRES_URI` (see [helper_test.go](helper_test.go) for example) 
+and run `make test`.
 
