@@ -24,12 +24,9 @@ func (p *Postgres) NewTransaction() (*Transaction, error) {
 	}, nil
 }
 
-// TransactionFunc is a callback called by Postgres.Transaction.
-type TransactionFunc func(*Transaction) error
-
 // Transaction starts a new transaction and automatically commits or
 // rolls back the transaction if TransactionFunc returns an error.
-func (p *Postgres) Transaction(fn TransactionFunc) error {
+func (p *Postgres) Transaction(fn func(*Transaction) error) error {
 	tx, err := p.NewTransaction()
 	if err != nil {
 		return err
