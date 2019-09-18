@@ -20,7 +20,7 @@ __Status:__ under active development, exposed func signatures mostly stable
 ## Usage
 
 ```go
-import pg "github.com/xxx/postgres"
+import pg "github.com/mattes/postgres"
 
 type User struct {
   Id    string `db:"pk"`
