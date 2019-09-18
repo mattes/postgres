@@ -47,7 +47,7 @@ func TestNewPrefixID(t *testing.T) {
 type TestNewID_Struct struct{}
 
 func TestNewID(t *testing.T) {
-	Register(&TestNewID_Struct{}, "test_new_id", "my_prefix")
+	RegisterWithPrefix(&TestNewID_Struct{}, "test_new_id", "my_prefix")
 
 	prefix, id, err := ParseID(NewID(&TestNewID_Struct{}))
 	require.NoError(t, err)
@@ -58,7 +58,7 @@ func TestNewID(t *testing.T) {
 type TestNewID_NoPrefix_Struct struct{}
 
 func TestNewID_NoPrefix(t *testing.T) {
-	Register(&TestNewID_NoPrefix_Struct{}, "test_new_id_no_prefix", "")
+	RegisterWithPrefix(&TestNewID_NoPrefix_Struct{}, "test_new_id_no_prefix", "")
 
 	prefix, id, err := ParseID(NewID(&TestNewID_NoPrefix_Struct{}))
 	require.NoError(t, err)

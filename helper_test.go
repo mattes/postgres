@@ -31,7 +31,7 @@ func init() {
 	naughtyBytes = loadNaughtyBytes("test_data/naughty.b64.json")
 
 	// initialize database connection and User{} for example_test.go
-	Register(&User{}, "user", "u")
+	RegisterWithPrefix(&User{}, "user", "u")
 }
 
 type stdoutLogger struct{}

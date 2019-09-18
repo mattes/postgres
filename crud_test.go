@@ -22,7 +22,7 @@ func TestGetStruct_UsesAlias(t *testing.T) {
 	getStruct(db, context.Background(), &TestGetStruct_UsesAlias_Struct{})
 
 	// now register alias and do it again
-	Register(&TestGetStruct_UsesAlias_Struct{}, "my_get_alias", "")
+	Register(&TestGetStruct_UsesAlias_Struct{}, "my_get_alias")
 	getStruct(db, context.Background(), &TestGetStruct_UsesAlias_Struct{})
 
 	log.Equal(t, "test_data/test_get_struct_uses_alias.txt")
@@ -45,7 +45,7 @@ func TestFilterStruct_UsesAlias(t *testing.T) {
 	filterStruct(db, context.Background(), &s, Query("Col1 = $1", "foo"))
 
 	// now register alias and do it again
-	Register(&TestFilterStruct_UsesAlias_Struct{}, "my_filter_alias", "")
+	Register(&TestFilterStruct_UsesAlias_Struct{}, "my_filter_alias")
 	filterStruct(db, context.Background(), &s, Query("Col1 = $1", "foo"))
 
 	log.Equal(t, "test_data/test_filter_struct_uses_alias.txt")
@@ -66,7 +66,7 @@ func TestSaveStruct_UsesAlias(t *testing.T) {
 	saveStruct(db, context.Background(), &TestSaveStruct_UsesAlias_Struct{})
 
 	// now register alias and do it again
-	Register(&TestSaveStruct_UsesAlias_Struct{}, "my_save_alias", "")
+	Register(&TestSaveStruct_UsesAlias_Struct{}, "my_save_alias")
 	saveStruct(db, context.Background(), &TestSaveStruct_UsesAlias_Struct{})
 
 	log.Equal(t, "test_data/test_save_struct_uses_alias.txt")
@@ -87,7 +87,7 @@ func TestInsertStruct_UsesAlias(t *testing.T) {
 	insertStruct(db, context.Background(), &TestInsertStruct_UsesAlias_Struct{})
 
 	// now register alias and do it again
-	Register(&TestInsertStruct_UsesAlias_Struct{}, "my_insert_alias", "")
+	Register(&TestInsertStruct_UsesAlias_Struct{}, "my_insert_alias")
 	insertStruct(db, context.Background(), &TestInsertStruct_UsesAlias_Struct{})
 
 	log.Equal(t, "test_data/test_insert_struct_uses_alias.txt")
@@ -108,7 +108,7 @@ func TestUpdateStruct_UsesAlias(t *testing.T) {
 	updateStruct(db, context.Background(), &TestUpdateStruct_UsesAlias_Struct{})
 
 	// now register alias and do it again
-	Register(&TestUpdateStruct_UsesAlias_Struct{}, "my_update_alias", "")
+	Register(&TestUpdateStruct_UsesAlias_Struct{}, "my_update_alias")
 	updateStruct(db, context.Background(), &TestUpdateStruct_UsesAlias_Struct{})
 
 	log.Equal(t, "test_data/test_update_struct_uses_alias.txt")
@@ -129,7 +129,7 @@ func TestDeleteStruct_UsesAlias(t *testing.T) {
 	deleteStruct(db, context.Background(), &TestDeleteStruct_UsesAlias_Struct{})
 
 	// now register alias and do it again
-	Register(&TestDeleteStruct_UsesAlias_Struct{}, "my_delete_alias", "")
+	Register(&TestDeleteStruct_UsesAlias_Struct{}, "my_delete_alias")
 	deleteStruct(db, context.Background(), &TestDeleteStruct_UsesAlias_Struct{})
 
 	log.Equal(t, "test_data/test_delete_struct_uses_alias.txt")

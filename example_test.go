@@ -13,7 +13,7 @@ func ExamplePostgres_Migrate() {
 	db, _ := Open(postgresURI)
 
 	// Register "example" struct with prefix "ex"
-	Register(&Example{}, "example", "ex")
+	RegisterWithPrefix(&Example{}, "example", "ex")
 
 	// Run migrations ...
 	_ = db.Migrate(context.Background())

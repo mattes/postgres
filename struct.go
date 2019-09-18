@@ -18,9 +18,9 @@ var (
 	structsMu sync.RWMutex
 )
 
-// Register registers a struct. Optional alias has to be globally unique.
+// RegisterWithPrefix registers a struct. Optional alias has to be globally unique.
 // Optional prefixID is used in NewID().
-func Register(s Struct, alias string, prefixID string) {
+func RegisterWithPrefix(s Struct, alias string, prefixID string) {
 	if s == nil {
 		panic("Register: struct is nil")
 	}
@@ -52,6 +52,11 @@ func Register(s Struct, alias string, prefixID string) {
 	x.prefixID = prefixID
 
 	structs[globalStructsName(s)] = x
+}
+
+// Register registers a struct. Optional alias has to be globally unique.
+func Register(s Struct, alias string) {
+	RegisterWithPrefix(s, alias, "")
 }
 
 // StructFieldName defines a struct's field name where interface{} must be
