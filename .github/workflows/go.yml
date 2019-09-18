@@ -22,7 +22,7 @@ jobs:
 
     - name: Test
       run: |
-        export GOTEST_POSTGRES_URI=postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&createTempTables=true
+        export GOTEST_POSTGRES_URI='postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable&createTempTables=true'
         go test -mod=vendor -v -race -coverprofile=coverage.out
 
     - name: Coverage
