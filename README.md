@@ -31,7 +31,7 @@ type User struct {
 func init() {
   // Register struct &User{} with alias 'user.v1',
   // and have new ids prefixed with 'user'.
-  postgres.RegisterWithPrefix(&User{}, "user.v1", "user")
+  pg.RegisterWithPrefix(&User{}, "user.v1", "user")
 }
 
 func main() {
