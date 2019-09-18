@@ -1,6 +1,10 @@
 package postgres
 
-import "time"
+import (
+	"fmt"
+	"os"
+	"time"
+)
 
 // Logger is a logging interface and can be used to implement a custom logger.
 type Logger interface {
@@ -13,4 +17,10 @@ func queryLog(logger Logger, query string, duration time.Duration, args ...inter
 	if logger != nil {
 		logger.Query(query, duration, args...)
 	}
+}
+
+type StdoutLogger struct{}
+
+func (l *StdoutLogger) Query(query string, duration time.Duration, args ...interface{}) {
+	fmt.Fprintf(os.Stdout, "%v [%v] with args: %+v", query, duration, args)
 }
