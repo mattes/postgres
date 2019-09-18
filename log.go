@@ -1,8 +1,7 @@
 package postgres
 
 import (
-	"fmt"
-	"os"
+	"log"
 	"time"
 )
 
@@ -19,8 +18,16 @@ func queryLog(logger Logger, query string, duration time.Duration, args ...inter
 	}
 }
 
-type StdoutLogger struct{}
+func NewDefaultLogger() *DefaultLogger {
+	return &DefaultLogger{}
+}
 
-func (l *StdoutLogger) Query(query string, duration time.Duration, args ...interface{}) {
-	fmt.Fprintf(os.Stdout, "%v [%v] with args: %+v", query, duration, args)
+type DefaultLogger struct{}
+
+func (l *DefaultLogger) Query(query string, duration time.Duration, args ...interface{}) {
+	if len(args) > 0 {
+		log.Printf("Query: %v [%v] with args: %+v", query, duration, args)
+	} else {
+		log.Printf("Query: %v [%v]", query, duration)
+	}
 }
