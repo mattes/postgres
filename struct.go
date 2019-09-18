@@ -39,6 +39,7 @@ func RegisterWithPrefix(s Struct, alias string, prefixID string) {
 
 	// if alias is set, make sure it's globally unique
 	if alias != "" {
+		alias = toSnake(alias)
 		for _, sx := range structs {
 			if strings.EqualFold(sx.name, alias) {
 				panic(fmt.Sprintf("Register: alias '%v' for struct %T not globally unique", alias, s))
@@ -101,7 +102,7 @@ type field struct {
 
 func newMetaStruct(v interface{}) (*metaStruct, error) {
 	r := &metaStruct{}
-	r.name = structName(v)
+	r.name = toSnake(structName(v))
 
 	f, err := newFields(v, true)
 	if err != nil {
