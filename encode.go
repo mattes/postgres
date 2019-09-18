@@ -30,7 +30,7 @@ func columnType(value interface{}) string {
 
 	switch value.(type) {
 	case time.Time, *time.Time:
-		return "timestamp (6) without time zone"
+		return "timestamp (6) without time zone null"
 
 	case time.Duration:
 		// see https://github.com/lib/pq/issues/78 why we can't use postgres' interval type

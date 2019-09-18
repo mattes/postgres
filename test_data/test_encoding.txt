@@ -53,15 +53,15 @@ ALTER TABLE "test_types_struct" ADD COLUMN "embedded_pointer" jsonb null
 
 ALTER TABLE "test_types_struct" ADD COLUMN "embedded_null_pointer" jsonb null
 
-ALTER TABLE "test_types_struct" ADD COLUMN "time" timestamp (6) without time zone
+ALTER TABLE "test_types_struct" ADD COLUMN "time" timestamp (6) without time zone null
 
-ALTER TABLE "test_types_struct" ADD COLUMN "time_zero" timestamp (6) without time zone
+ALTER TABLE "test_types_struct" ADD COLUMN "time_zero" timestamp (6) without time zone null
 
-ALTER TABLE "test_types_struct" ADD COLUMN "time_null" timestamp (6) without time zone
+ALTER TABLE "test_types_struct" ADD COLUMN "time_null" timestamp (6) without time zone null
 
-ALTER TABLE "test_types_struct" ADD COLUMN "time_pointer" timestamp (6) without time zone
+ALTER TABLE "test_types_struct" ADD COLUMN "time_pointer" timestamp (6) without time zone null
 
-ALTER TABLE "test_types_struct" ADD COLUMN "time_null_pointer" timestamp (6) without time zone
+ALTER TABLE "test_types_struct" ADD COLUMN "time_null_pointer" timestamp (6) without time zone null
 
 ALTER TABLE "test_types_struct" ADD COLUMN "duration" bigint not null default 0
 
