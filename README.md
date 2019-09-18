@@ -57,6 +57,7 @@ is used as the postgres default value. Complex Go types are stored as JSON.
 |------------------------|---------------------------------|
 | implements sql.Scanner | text null                       |
 | time.Time              | timestamp (6) without time zone |
+| time.Duration          | bigint                          |
 | []string               | text[] null                     |
 | string                 | text not null default ''        |
 | bool                   | boolean not null default false  |

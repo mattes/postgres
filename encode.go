@@ -19,6 +19,14 @@ func columnType(value interface{}) string {
 	case time.Time, *time.Time:
 		return "timestamp (6) without time zone"
 
+	case time.Duration:
+		// see https://github.com/lib/pq/issues/78 why we can't use postgres' interval type
+		return "bigint not null default 0"
+
+	case *time.Duration:
+		// see comment above in regards to interval type
+		return "bigint null"
+
 	case []string:
 		return "text[] null"
 	}
@@ -74,6 +82,15 @@ func encodeValue(value reflect.Value) (driver.Value, error) {
 			return nil, nil
 		}
 		return v.UTC().Truncate(time.Microsecond), nil // always store UTC
+
+	case time.Duration:
+		return v.Nanoseconds(), nil
+
+	case *time.Duration:
+		if v == nil {
+			return nil, nil
+		}
+		return v.Nanoseconds(), nil
 	}
 
 	if reflect.PtrTo(value.Type()).Implements(valuerReflectType) {
@@ -102,7 +119,6 @@ func decodeValue(dst reflect.Value, value interface{}) error {
 	}
 
 	switch x := value.(type) {
-
 	case time.Time:
 		switch dst.Interface().(type) {
 		case time.Time:
@@ -114,13 +130,21 @@ func decodeValue(dst reflect.Value, value interface{}) error {
 		}
 	}
 
-	// reverse pointer if any
-	fieldValueType := dst.Type().Kind()
-	if fieldValueType == reflect.Ptr {
-		fieldValueType = dst.Type().Elem().Kind()
+	switch dst.Interface().(type) {
+	case time.Duration:
+		return setValue(dst, time.Duration(value.(int64)))
+	case *time.Duration:
+		x := time.Duration(value.(int64))
+		return setValue(dst, &x)
 	}
 
-	switch fieldValueType {
+	// reverse pointer if any
+	dstKind := dst.Type().Kind()
+	if dstKind == reflect.Ptr {
+		dstKind = dst.Type().Elem().Kind()
+	}
+
+	switch dstKind {
 
 	case reflect.String:
 		if _, ok := dst.Interface().(string); ok {

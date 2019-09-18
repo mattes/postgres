@@ -74,6 +74,12 @@ type TestTypesStruct struct {
 	TimePointer     *time.Time
 	TimeNullPointer *time.Time
 
+	Duration            time.Duration
+	DurationZero        time.Duration
+	DurationNull        *time.Duration
+	DurationPointer     *time.Duration
+	DurationNullPointer *time.Duration
+
 	Map     map[string]string
 	MapNull map[string]string
 
@@ -87,6 +93,8 @@ func TestEncoding(t *testing.T) {
 	ts := time.Date(2019, 7, 19, 16, 8, 30, 123456789, time.FixedZone("UTC+1", 60*60))
 	ts1 := time.Date(2019, 7, 19, 16, 8, 30, 123456789, time.UTC)
 	ts2 := time.Date(2019, 7, 19, 16, 8, 30, 123456789, time.UTC).Truncate(time.Microsecond)
+
+	td := 7 * time.Second
 
 	tstruct := TestTypesStruct{
 		Id:                  1, // is primary key
@@ -112,6 +120,11 @@ func TestEncoding(t *testing.T) {
 		TimeNull:            nil,
 		TimePointer:         &ts1,
 		TimeNullPointer:     nil,
+		Duration:            5 * time.Second,
+		DurationZero:        time.Duration(0),
+		DurationNull:        nil,
+		DurationPointer:     &td,
+		DurationNullPointer: nil,
 		Map:                 map[string]string{"Foo": "Bar"},
 		MapNull:             nil,
 		SqlType:             SqlType{"foobar"},
@@ -150,7 +163,6 @@ func TestEncoding(t *testing.T) {
 	assert.Equal(t, false, tstructx.BoolFalse)
 	assert.Equal(t, []string{"foo", "bar"}, tstructx.StringSlice)
 	assert.Equal(t, []string(nil), tstructx.StringSliceNull)
-
 	assert.Equal(t, []int{1, 2}, tstructx.IntSlice)
 	assert.Equal(t, []int(nil), tstructx.IntSliceNull)
 	assert.Equal(t, []Embedded{{"Name"}}, tstructx.EmbeddedSlice)
@@ -165,6 +177,11 @@ func TestEncoding(t *testing.T) {
 	assert.Equal(t, (*time.Time)(nil), tstructx.TimeNull)
 	assert.Equal(t, (*time.Time)(nil), tstructx.TimeNullPointer)
 	assert.Equal(t, &ts2, tstructx.TimePointer)
+	assert.Equal(t, 5*time.Second, tstructx.Duration)
+	assert.Equal(t, time.Duration(0), tstructx.DurationZero)
+	assert.Equal(t, (*time.Duration)(nil), tstructx.DurationNull)
+	assert.Equal(t, &td, tstructx.DurationPointer)
+	assert.Equal(t, (*time.Duration)(nil), tstructx.DurationNullPointer)
 	assert.Equal(t, map[string]string{"Foo": "Bar"}, tstructx.Map)
 	assert.Equal(t, map[string]string(nil), tstructx.MapNull)
 	assert.Equal(t, SqlType{"foobar"}, tstructx.SqlType)
