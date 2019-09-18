@@ -11,10 +11,27 @@ import (
 
 func toSnake(in ...string) string {
 	for i := 0; i < len(in); i++ {
-		in[i] = snakecase.SnakeCase(strings.Trim(in[i], "_"))
+		in[i] = strings.Map(toSnakeChars, in[i])
+		in[i] = strings.Trim(in[i], "_")
+		in[i] = snakecase.SnakeCase(in[i])
 	}
-
 	return strings.Join(in, "_")
+}
+
+func toSnakeChars(r rune) rune {
+	switch {
+	case r >= 'a' && r <= 'z':
+		return r
+
+	case r >= 'A' && r <= 'Z':
+		return r
+
+	case r >= '0' && r <= '9':
+		return r
+
+	default:
+		return '_'
+	}
 }
 
 func stringSliceToSnake(in []string) []string {

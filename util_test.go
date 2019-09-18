@@ -20,6 +20,10 @@ func TestToSnake(t *testing.T) {
 		{"Col_1_Index", "col_1_index"},
 		{"1Test", "1_test"},
 		{"Col_1", "col_1"},
+		{"Col.1", "col_1"},
+		{"Foo.Bar", "foo_bar"},
+		{"Foo-Bar", "foo_bar"},
+		{"Foo%Bar", "foo_bar"},
 	}
 
 	for _, tt := range tests {
