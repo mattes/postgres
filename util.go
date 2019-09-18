@@ -18,10 +18,11 @@ func toSnake(in ...string) string {
 }
 
 func stringSliceToSnake(in []string) []string {
+	out := make([]string, len(in))
 	for i := 0; i < len(in); i++ {
-		in[i] = toSnake(in[i])
+		out[i] = toSnake(in[i])
 	}
-	return in
+	return out
 }
 
 // equalStringSlice returns true if two string slices are exactly the same
@@ -137,6 +138,18 @@ func quoteIdentifier(in string) (string, error) {
 	in = strings.Trim(in, `"`)
 	q := pq.QuoteIdentifier(in)
 	return checkIdentifierLen(q)
+}
+
+func unquoteIdentifier(in string) string {
+	return strings.Trim(in, `\"`)
+}
+
+func unquoteIdentifiers(in []string) []string {
+	out := make([]string, len(in))
+	for i := 0; i < len(in); i++ {
+		out[i] = unquoteIdentifier(in[i])
+	}
+	return out
 }
 
 func checkIdentifierLen(in string) (string, error) {

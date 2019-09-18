@@ -44,3 +44,9 @@ func TestEqualStringSliceIgnoreOrder(t *testing.T) {
 	require.True(t, equalStringSliceIgnoreOrder([]string{"a", "c", "b"}, []string{"a", "b", "c"}))
 	require.False(t, equalStringSliceIgnoreOrder([]string{"a", "b"}, []string{"a", "b", "c"}))
 }
+
+func TestUnquoteIdentifiers(t *testing.T) {
+	require.Equal(t,
+		[]string{"foo", "bar"},
+		unquoteIdentifiers([]string{`\"foo\"`, `\"bar\"`}))
+}

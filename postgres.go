@@ -453,6 +453,11 @@ WHERE idx.indrelid = %v :: REGCLASS`
 		if err := mustNewFields(i, false).Scan(rows); err != nil {
 			return nil, err
 		}
+
+		// unquote identifiers
+		i.Name = unquoteIdentifier(i.Name)
+		i.Columns = unquoteIdentifiers(i.Columns)
+
 		is = append(is, *i)
 	}
 
@@ -479,6 +484,10 @@ func (p *Postgres) describeTableColumns(tableName string) ([]column, error) {
 		if err := mustNewFields(c, false).Scan(rows); err != nil {
 			return nil, err
 		}
+
+		// unquote identifier
+		c.Name = unquoteIdentifier(c.Name)
+
 		cs = append(cs, *c)
 	}
 

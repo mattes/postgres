@@ -1172,6 +1172,9 @@ func TestRegisterAndMigrate(t *testing.T) {
 
 	require.NoError(t, db.advisoryUnlockAll()) // just to make sure
 	require.NoError(t, db.Migrate(context.Background()))
+
+	// run again, no errors expected
+	require.NoError(t, db.Migrate(context.Background()))
 }
 
 func TestAdvisoryLocks(t *testing.T) {
@@ -1207,4 +1210,49 @@ func TestAdvisoryLocks(t *testing.T) {
 	time.Sleep(250 * time.Millisecond) // make sure it's closed
 	require.NoError(t, db2.advisoryLock(key))
 	require.NoError(t, db2.advisoryUnlock(key))
+}
+
+type TestDescribeTableIndexes_Struct struct {
+	Col1      string `db:"pk"`
+	Timestamp string `db:"pk"` // timestamp is also postgres identifier
+}
+
+func TestDescribeTableIndexes(t *testing.T) {
+	Register("test_describe_table_indexes", &TestDescribeTableIndexes_Struct{})
+
+	db, err := Open(postgresURI)
+	require.NoError(t, err)
+
+	require.NoError(t, db.advisoryUnlockAll()) // just to make sure
+	require.NoError(t, db.Migrate(context.Background()))
+
+	indexes, err := db.describeTableIndexes("test_describe_table_indexes_struct")
+	require.NoError(t, err)
+
+	require.Len(t, indexes, 1)
+	require.Equal(t, "test_describe_table_indexes_struct_pk", indexes[0].Name)
+	require.Equal(t, "btree", indexes[0].Type)
+	require.Equal(t, []string{"col1", "timestamp"}, indexes[0].Columns)
+}
+
+type TestDescribeTableColumns_Struct struct {
+	Col1      string `db:"pk"`
+	Timestamp string `db:"pk"` // timestamp is also postgres identifier
+}
+
+func TestDescribeTableColumns(t *testing.T) {
+	Register("test_describe_table_columns", &TestDescribeTableColumns_Struct{})
+
+	db, err := Open(postgresURI)
+	require.NoError(t, err)
+
+	require.NoError(t, db.advisoryUnlockAll()) // just to make sure
+	require.NoError(t, db.Migrate(context.Background()))
+
+	cols, err := db.describeTableColumns("test_describe_table_columns_struct")
+	require.NoError(t, err)
+
+	require.Len(t, cols, 2)
+	require.Equal(t, "col1", cols[0].Name)
+	require.Equal(t, "timestamp", cols[1].Name)
 }
