@@ -30,6 +30,7 @@ func columnType(value interface{}) string {
 
 	switch value.(type) {
 	case time.Time, *time.Time:
+		// INFO: we map the zero type to null
 		return "timestamp (6) without time zone null"
 
 	case time.Duration:
