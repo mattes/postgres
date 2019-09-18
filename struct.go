@@ -20,7 +20,7 @@ var (
 
 // Register registers a struct. Optional alias has to be globally unique.
 // Optional prefixID is used in NewID().
-func Register(s Struct, alias, prefixID string) {
+func Register(s Struct, alias string, prefixID string) {
 	if s == nil {
 		panic("Register: struct is nil")
 	}
