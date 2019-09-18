@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/lib/pq"
@@ -38,7 +39,7 @@ func init() {
 
 type stdoutLogger struct{}
 
-func (l *stdoutLogger) Query(query string, args ...interface{}) {
+func (l *stdoutLogger) Query(query string, duration time.Duration, args ...interface{}) {
 	fmt.Println(query)
 }
 
@@ -58,7 +59,7 @@ var spewQueryArgsConfig = &spew.ConfigState{
 	SortKeys:                true,
 }
 
-func (l *testLogger) Query(query string, args ...interface{}) {
+func (l *testLogger) Query(query string, duration time.Duration, args ...interface{}) {
 	var q string
 	if len(args) > 0 {
 		q = fmt.Sprintf("%v ... with args:\n%v", query, spewQueryArgsConfig.Sdump(args))

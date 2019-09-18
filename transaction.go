@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 type Transaction struct {
@@ -91,15 +92,19 @@ func (t *Transaction) Delete(ctx context.Context, s Struct) error {
 // Exec executes a query that doesn't return rows. For example: an INSERT and UPDATE.
 func (t *Transaction) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	query = formatQuery(query)
-	t.logQuery(query, args...)
-	return t.tx.ExecContext(ctx, query, args...)
+	start := time.Now()
+	r, err := t.tx.ExecContext(ctx, query, args...)
+	t.logQuery(query, time.Since(start), args...)
+	return r, err
 }
 
 // Query executes a query that returns rows, typically a SELECT.
 func (t *Transaction) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	query = formatQuery(query)
-	t.logQuery(query, args...)
-	return t.tx.QueryContext(ctx, query, args...)
+	start := time.Now()
+	r, err := t.tx.QueryContext(ctx, query, args...)
+	t.logQuery(query, time.Since(start), args...)
+	return r, err
 }
 
 // QueryRow executes a query that is expected to return at most one row.
@@ -110,10 +115,12 @@ func (t *Transaction) Query(ctx context.Context, query string, args ...interface
 // the rest.
 func (t *Transaction) QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	query = formatQuery(query)
-	t.logQuery(query, args...)
-	return t.tx.QueryRowContext(ctx, query, args...)
+	start := time.Now()
+	r := t.tx.QueryRowContext(ctx, query, args...)
+	t.logQuery(query, time.Since(start), args...)
+	return r
 }
 
-func (t *Transaction) logQuery(query string, args ...interface{}) {
-	queryLog(t.logger, query, args...)
+func (t *Transaction) logQuery(query string, duration time.Duration, args ...interface{}) {
+	queryLog(t.logger, query, duration, args...)
 }

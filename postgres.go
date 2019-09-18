@@ -314,15 +314,19 @@ func (p *Postgres) ensureForeignKeys(r *metaStruct) error {
 // Exec executes a query that doesn't return rows. For example: an INSERT and UPDATE.
 func (p *Postgres) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	query = formatQuery(query)
-	p.logQuery(query, args...)
-	return p.db.ExecContext(ctx, query, args...)
+	start := time.Now()
+	r, err := p.db.ExecContext(ctx, query, args...)
+	p.logQuery(query, time.Since(start), args...)
+	return r, err
 }
 
 // Query executes a query that returns rows, typically a SELECT.
 func (p *Postgres) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	query = formatQuery(query)
-	p.logQuery(query, args...)
-	return p.db.QueryContext(ctx, query, args...)
+	start := time.Now()
+	r, err := p.db.QueryContext(ctx, query, args...)
+	p.logQuery(query, time.Since(start), args...)
+	return r, err
 }
 
 // QueryRow executes a query that is expected to return at most one row.
@@ -333,12 +337,14 @@ func (p *Postgres) Query(ctx context.Context, query string, args ...interface{})
 // the rest.
 func (p *Postgres) QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	query = formatQuery(query)
-	p.logQuery(query, args...)
-	return p.db.QueryRowContext(ctx, query, args...)
+	start := time.Now()
+	r := p.db.QueryRowContext(ctx, query, args...)
+	p.logQuery(query, time.Since(start), args...)
+	return r
 }
 
-func (p *Postgres) logQuery(query string, args ...interface{}) {
-	queryLog(p.Logger, query, args...)
+func (p *Postgres) logQuery(query string, duration time.Duration, args ...interface{}) {
+	queryLog(p.Logger, query, duration, args...)
 }
 
 func (p *Postgres) truncate(tableName string) error {
