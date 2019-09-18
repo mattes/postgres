@@ -3,6 +3,8 @@ package postgres
 import (
 	"log"
 	"time"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 // Logger is a logging interface and can be used to implement a custom logger.
@@ -24,9 +26,16 @@ func NewDefaultLogger() *DefaultLogger {
 
 type DefaultLogger struct{}
 
+var defaultLoggerSpewArgsConfig = &spew.ConfigState{
+	Indent:                  "  ",
+	DisablePointerAddresses: true,
+	DisableCapacities:       true,
+	SortKeys:                true,
+}
+
 func (l *DefaultLogger) Query(query string, duration time.Duration, args ...interface{}) {
 	if len(args) > 0 {
-		log.Printf("Query: %v [%v] with args: %+v", query, duration, args)
+		log.Printf("Query: %v [%v] with args:\n%v", query, duration, defaultLoggerSpewArgsConfig.Sdump(args))
 	} else {
 		log.Printf("Query: %v [%v]", query, duration)
 	}
