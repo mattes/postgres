@@ -50,3 +50,10 @@ func ParseID(id string) (prefix string, kid ksuid.KSUID, err error) {
 
 	return "", ksuid.Nil, ErrInvalidId
 }
+
+// NewID is a convenience function calling NewID. It exists
+// so that the package doesn't have to be imported if just a *Postgres
+// instance is passed around.
+func (p *Postgres) NewID(s Struct) string {
+	return NewID(s)
+}
