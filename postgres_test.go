@@ -1159,6 +1159,25 @@ func TestEnsureTable_ForeignKey(t *testing.T) {
 	log.Equal(t, "test_data/test_ensure_table_foreign_key.txt")
 }
 
+type TestEnsureTable_PartitionByRange_Struct struct {
+	Col1 string `db:"pk"`
+	Col2 string `db:"pk,partitionByRange"`
+}
+
+func TestEnsureTable_PartitionByRange(t *testing.T) {
+	db, err := Open(postgresURI)
+	require.NoError(t, err)
+
+	// attach test logger
+	log := &testLogger{debug: false}
+	db.Logger = log
+
+	// create table
+	require.NoError(t, db.ensureTable(mustNewMetaStruct(&TestEnsureTable_PartitionByRange_Struct{})))
+
+	log.Equal(t, "test_data/test_ensure_table_partition_by_range.txt")
+}
+
 type TestRegisterAndMigrate_Struct struct {
 	Col1 string `db:"pk"`
 	Col2 string

@@ -73,6 +73,16 @@ func Open(uri string) (*Postgres, error) {
 		createTempTables: extra.createTempTables,
 	}
 
+	// verify min version
+	minVersion, err := p.isMinVersion(11)
+	if err != nil {
+		return nil, err
+	}
+
+	if !minVersion {
+		return nil, fmt.Errorf("Postgres version >= 11 required")
+	}
+
 	return p, nil
 }
 
@@ -210,12 +220,15 @@ func (p *Postgres) ensureTable(r *metaStruct) error {
 	if isErrTableDoesNotExist(err) {
 
 		// create table first
-		if err := p.createTable(toSnake(r.name)); err != nil {
+		if err := p.createTable(r); err != nil {
 			return err
 		}
 
-		// set empty table
-		tbl = &table{}
+		// load fresh details
+		tbl, err = p.describeTable(toSnake(r.name))
+		if err != nil {
+			return err
+		}
 
 	} else if err != nil {
 		return err
@@ -241,7 +254,7 @@ func (p *Postgres) ensureTable(r *metaStruct) error {
 			IsUnique:  true,
 			IsPrimary: true,
 		}) {
-			if err := p.createIndex(toSnake(r.name, "pk"), r.name, primaryNames, true); err != nil {
+			if err := p.createIndex(toSnake(r.name, "pk"), r.name, primaryNames, true, !r.fields.hasPartitionedField()); err != nil {
 				return err
 			}
 			if err := p.addPrimaryKey(toSnake(r.name), toSnake(r.name, "pk"), toSnake(r.name, "pk")); err != nil {
@@ -262,7 +275,7 @@ func (p *Postgres) ensureTable(r *metaStruct) error {
 				Columns:  fieldNames,
 				IsUnique: true,
 			}) {
-				if err := p.createIndex(toSnake(r.name, indexName), toSnake(r.name), fieldNames, true); err != nil {
+				if err := p.createIndex(toSnake(r.name, indexName), toSnake(r.name), fieldNames, true, !r.fields.hasPartitionedField()); err != nil {
 					return err
 				}
 			}
@@ -280,7 +293,7 @@ func (p *Postgres) ensureTable(r *metaStruct) error {
 				Type:    "btree",
 				Columns: fieldNames,
 			}) {
-				if err := p.createIndex(toSnake(r.name, indexName), toSnake(r.name), fieldNames, false); err != nil {
+				if err := p.createIndex(toSnake(r.name, indexName), toSnake(r.name), fieldNames, false, !r.fields.hasPartitionedField()); err != nil {
 					return err
 				}
 			}
@@ -305,7 +318,7 @@ func (p *Postgres) ensureForeignKeys(r *metaStruct) error {
 
 			// add unique index on referenced columns
 			if !refTbl.hasUniqueIndexByColumns(f.referencesFields) {
-				if err := p.createIndex(toSnake(f.referencesStruct, f.referencesFields[0], "unique"), f.referencesStruct, f.referencesFields, true); err != nil {
+				if err := p.createIndex(toSnake(f.referencesStruct, f.referencesFields[0], "unique"), f.referencesStruct, f.referencesFields, true, !r.fields.hasPartitionedField()); err != nil {
 					return err
 				}
 			}
@@ -368,16 +381,46 @@ func (p *Postgres) truncate(tableName string) error {
 	return err
 }
 
-func (p *Postgres) createTable(tableName string) error {
-	var queryf string
+func (p *Postgres) createTable(r *metaStruct) error {
+	q := queryf()
+	q.Append("CREATE")
+
 	if p.createTempTables {
-		queryf = "CREATE TEMPORARY TABLE IF NOT EXISTS %v ()"
-	} else {
-		queryf = "CREATE TABLE IF NOT EXISTS %v ()"
+		q.Append("TEMPORARY")
 	}
 
-	query := fmt.Sprintf(queryf, mustIdentifier(tableName))
-	_, err := p.Exec(context.Background(), query)
+	q.Appendf("TABLE IF NOT EXISTS %v", mustIdentifier(r.name))
+
+	q.Append("(")
+
+	// add columns
+	fields := make([]string, 0)
+	for _, f := range r.fields {
+		fields = append(fields, fmt.Sprintf("%v %v", mustIdentifier(f.name), f.columnType()))
+	}
+	q.Append(join(fields))
+
+	// add primary key
+	if len(r.fields.primaryNames()) > 0 {
+		q.Appendf(", CONSTRAINT %v PRIMARY KEY (%v)",
+			mustIdentifier(toSnake(r.name, "pk")),
+			mustJoinIdentifiers(r.fields.primaryNames()))
+	}
+
+	q.Append(")")
+
+	// partition by range
+	partitionByRangeFields := make([]string, 0)
+	for _, f := range r.fields {
+		if f.partitionByRange {
+			partitionByRangeFields = append(partitionByRangeFields, f.name)
+		}
+	}
+	if len(partitionByRangeFields) > 0 {
+		q.Appendf("PARTITION BY RANGE (%v)", mustJoinIdentifiers(partitionByRangeFields))
+	}
+
+	_, err := p.Exec(context.Background(), q.String())
 	return err
 }
 
@@ -388,16 +431,24 @@ func (p *Postgres) addColumn(tableName, columnName, dataType string) error {
 	return err
 }
 
-func (p *Postgres) createIndex(indexName, tableName string, columns []string, unique bool) error {
-	var queryf string
+func (p *Postgres) createIndex(indexName, tableName string, columns []string, unique, concurrently bool) error {
+	q := queryf()
+	q.Append("CREATE")
+
 	if unique {
-		queryf = "CREATE UNIQUE INDEX CONCURRENTLY %v ON %v (%v)"
-	} else {
-		queryf = "CREATE INDEX CONCURRENTLY %v ON %v (%v)"
+		q.Append("UNIQUE")
 	}
 
-	query := fmt.Sprintf(queryf, mustIdentifier(indexName), mustIdentifier(tableName), mustJoinIdentifiers(columns))
-	_, err := p.Exec(context.Background(), query)
+	q.Append("INDEX")
+
+	if concurrently {
+		q.Append("CONCURRENTLY")
+	}
+
+	q.Append(mustIdentifier(indexName), "ON", mustIdentifier(tableName))
+	q.Appendf("(%v)", mustJoinIdentifiers(columns))
+
+	_, err := p.Exec(context.Background(), q.String())
 	return err
 }
 
@@ -597,6 +648,27 @@ func (p *Postgres) advisoryUnlockAll() error {
 	query := "SELECT pg_advisory_unlock_all()"
 	_, err := p.Exec(context.Background(), query)
 	return err
+}
+
+func (p *Postgres) version() (int, error) {
+	query := "SHOW server_version_num"
+	row := p.QueryRow(context.Background(), query)
+
+	var version int
+	if err := row.Scan(&version); err != nil {
+		return 0, err
+	}
+
+	return version, nil
+}
+
+func (p *Postgres) isMinVersion(version int) (bool, error) {
+	x, err := p.version()
+	if err != nil {
+		return false, err
+	}
+
+	return x >= version*1000, nil
 }
 
 // scan calls row.Scan and returns a slice of pointers to interfaces

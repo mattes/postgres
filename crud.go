@@ -65,14 +65,14 @@ func filterStruct(db db, ctx context.Context, s StructSlice, q *QueryStmt) error
 		return err
 	}
 
-	query := queryf(
-		"SELECT", mustJoinIdentifiers(r.fields.names()),
-		"FROM", mustIdentifier(r.alias()),
-		q.queryStr(), // WHERE
-		q.orderStr(), // ORDER BY
-		"LIMIT", q.limit)
+	qx := queryf()
+	qx.Append("SELECT", mustJoinIdentifiers(r.fields.names()))
+	qx.Append("FROM", mustIdentifier(r.alias()))
+	qx.Append(q.queryStr()) // WHERE
+	qx.Append(q.orderStr()) // ORDER BY
+	qx.Append("LIMIT", q.limit)
 
-	rows, err := db.Query(ctx, query, q.args...)
+	rows, err := db.Query(ctx, qx.String(), q.args...)
 	if err != nil {
 		return err
 	}

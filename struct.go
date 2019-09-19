@@ -98,6 +98,9 @@ type field struct {
 	// references(table.column)
 	referencesStruct string
 	referencesFields []string
+
+	// partitionByRange
+	partitionByRange bool
 }
 
 func newMetaStruct(v interface{}) (*metaStruct, error) {
@@ -308,6 +311,15 @@ func (f fields) Scan(row rowScan) error {
 	return nil
 }
 
+func (f fields) hasPartitionedField() bool {
+	for _, x := range f {
+		if x.partitionByRange {
+			return true
+		}
+	}
+	return false
+}
+
 func (f *field) String() string {
 	return fmt.Sprintf("%v = %v (%T)", f.name, f.value, f.value.Interface())
 }
@@ -371,6 +383,9 @@ func (f *field) assignTags(tags []tag) error {
 
 			f.referencesStruct = parts[0]
 			f.referencesFields = []string{parts[1]}
+
+		case "partitionByRange":
+			f.partitionByRange = true
 		}
 	}
 

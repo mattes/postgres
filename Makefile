@@ -6,6 +6,9 @@ benchmark:
 	go test -mod=vendor -benchmem -bench .
 
 test:
+	go test -mod=vendor -v
+
+race:
 	go test -mod=vendor -v -race
 
 coverage:

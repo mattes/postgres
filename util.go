@@ -207,31 +207,44 @@ func join(in []string) string {
 	return strings.Join(out, ", ")
 }
 
-func queryf(args ...interface{}) string {
-	out := []string{}
-
-	for i := 0; i < len(args); i++ {
-		switch v := args[i].(type) {
-		case string:
-			if v != "" {
-				out = append(out, v)
-			}
-
-		default:
-			x := fmt.Sprintf("%v", v)
-			if x != "" {
-				out = append(out, x)
-			}
-		}
-	}
-
-	return strings.Join(out, " ")
-}
-
 func toString(str interface{}) string {
 	v := reflect.ValueOf(str)
 	if v.Type().Kind() != reflect.String {
 		panic("must be stringable type")
 	}
 	return v.String()
+}
+
+type queryFmt struct {
+	elems []string
+}
+
+func queryf() *queryFmt {
+	return &queryFmt{}
+}
+
+func (q *queryFmt) Append(args ...interface{}) *queryFmt {
+	for i := 0; i < len(args); i++ {
+		switch v := args[i].(type) {
+		case string:
+			if v != "" {
+				q.elems = append(q.elems, v)
+			}
+
+		default:
+			x := fmt.Sprintf("%v", v)
+			if x != "" {
+				q.elems = append(q.elems, x)
+			}
+		}
+	}
+
+	return q
+}
+func (q *queryFmt) Appendf(format string, args ...interface{}) *queryFmt {
+	return q.Append(fmt.Sprintf(format, args...))
+}
+
+func (q *queryFmt) String() string {
+	return strings.Join(q.elems, " ")
 }

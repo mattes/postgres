@@ -14,6 +14,8 @@ a set of new features on top of it:
 * Advanced encoding & decoding between Go and Postgres column types
 * Create tables, indexes and foreign keys for Go structs
 
+Postgres >= 11 required.
+
 __Status:__ under active development, exposed func signatures mostly stable
 
 
