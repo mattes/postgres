@@ -281,7 +281,7 @@ func (q *QueryStmt) quoteIdentifiers(r fields) error {
 			}
 
 			// at least quote identifier, even if we don't know what the field is
-			quoteIdent, err := quoteIdentifier(parts[0])
+			quoteIdent, err := QuoteIdentifier(parts[0])
 			if err != nil {
 				replaceErr = err
 				return ""

@@ -98,7 +98,7 @@ func formatQuery(query string) string {
 	return strings.TrimSpace(query)
 }
 
-func literal(in string) string {
+func QuoteLiteral(in string) string {
 	return pq.QuoteLiteral(in)
 }
 
@@ -119,19 +119,19 @@ func identifier(in string) (string, error) {
 
 	switch len(parts) {
 	case 1:
-		return quoteIdentifier(toSnake(parts[0]))
+		return QuoteIdentifier(toSnake(parts[0]))
 
 	case 2:
 		if parts[0] == "" || parts[1] == "" {
 			panic("empty identifier")
 		}
 
-		p0, err := quoteIdentifier(toSnake(parts[0]))
+		p0, err := QuoteIdentifier(toSnake(parts[0]))
 		if err != nil {
 			return "", err
 		}
 
-		p1, err := quoteIdentifier(toSnake(parts[1]))
+		p1, err := QuoteIdentifier(toSnake(parts[1]))
 		if err != nil {
 			return "", err
 		}
@@ -143,15 +143,15 @@ func identifier(in string) (string, error) {
 	}
 }
 
-func mustQuoteIdentifier(in string) string {
-	i, err := quoteIdentifier(in)
+func MustQuoteIdentifier(in string) string {
+	ident, err := QuoteIdentifier(in)
 	if err != nil {
 		panic(err)
 	}
-	return i
+	return ident
 }
 
-func quoteIdentifier(in string) (string, error) {
+func QuoteIdentifier(in string) (string, error) {
 	in = strings.Trim(in, `"`)
 	q := pq.QuoteIdentifier(in)
 	return checkIdentifierLen(q)

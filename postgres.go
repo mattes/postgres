@@ -511,7 +511,7 @@ JOIN pg_am AS am ON i.relam = am.oid
 JOIN pg_namespace AS ns ON i.relnamespace = ns.OID
 WHERE idx.indrelid = %v :: REGCLASS`
 
-	query := fmt.Sprintf(queryf, literal(tableName))
+	query := fmt.Sprintf(queryf, QuoteLiteral(tableName))
 	rows, err := p.Query(context.Background(), query)
 	if err != nil {
 		return nil, err
@@ -542,7 +542,7 @@ WHERE idx.indrelid = %v :: REGCLASS`
 
 func (p *Postgres) describeTableColumns(tableName string) ([]column, error) {
 	queryf := "SELECT column_name, is_nullable, data_type FROM information_schema.columns WHERE table_name = %v"
-	query := fmt.Sprintf(queryf, literal(tableName))
+	query := fmt.Sprintf(queryf, QuoteLiteral(tableName))
 	rows, err := p.Query(context.Background(), query)
 	if err != nil {
 		return nil, err
@@ -572,7 +572,7 @@ func (p *Postgres) describeTableColumns(tableName string) ([]column, error) {
 
 func (p *Postgres) constraintExists(constraintName string) (bool, error) {
 	queryf := "SELECT 1 FROM information_schema.constraint_column_usage WHERE constraint_name = %v"
-	query := fmt.Sprintf(queryf, literal(constraintName))
+	query := fmt.Sprintf(queryf, QuoteLiteral(constraintName))
 	row := p.QueryRow(context.Background(), query)
 
 	var exists int
