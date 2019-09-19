@@ -117,6 +117,7 @@ This package will pick up `db` struct tags to create migrations and queries for 
 | `db:"index(name)"` | Creates an index with given name. Can be used across multiple fields to create a composite index. |
 | `db:"unique"` | Creates a unique index for a field. |
 | `db:"unique(name)"` | Creates a unique index with given name. Can be used across multiple fields to create composite unique index. |
+| `db:"partitionByRange"` | Partitions table by range for given field. Requires `pk` at the same time. |
 
 ## Testing
 
