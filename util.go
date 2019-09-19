@@ -169,8 +169,10 @@ func unquoteIdentifiers(in []string) []string {
 	return out
 }
 
+var MaxIdentifierLength = 63
+
 func checkIdentifierLen(in string) (string, error) {
-	if len(in) > 63 {
+	if len(in) > MaxIdentifierLength {
 		return "", fmt.Errorf("identifier too long: %v", in)
 	}
 	return in, nil
