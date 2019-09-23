@@ -27,27 +27,20 @@ func TestRegister_Alias(t *testing.T) {
 
 func Test_UniqueIndexes(t *testing.T) {
 	fields := fields{
-		{name: "a", unique: true},
-		{name: "b", unique: true, uniqueIndexName: "foo"},
-		{name: "c", unique: true, uniqueIndexName: "foo"},
+		{name: "a", indexes: []indexStructTag{{unique: true}}},
+		{name: "b", indexes: []indexStructTag{{unique: true, name: "foo", composite: []string{"c"}}}},
+		{name: "c", indexes: []indexStructTag{{unique: true, name: "bar", composite: []string{"b"}}}},
+		{name: "d", indexes: []indexStructTag{{unique: true, composite: []string{"b"}}}},
 	}
 
 	out := fields.uniqueIndexes()
 	expect := map[string][]string{
-		"a_unique": []string{"a"},
-		"foo":      []string{"b", "c"},
+		"a_unique":   []string{"a"},
+		"foo":        []string{"b", "c"},
+		"bar":        []string{"c", "b"},
+		"d_b_unique": []string{"d", "b"},
 	}
 	require.Equal(t, expect, out)
-}
-
-type newFieldsStruct struct {
-	a string `db:"unique"`
-}
-
-func Test_NewFields(t *testing.T) {
-	fields := mustNewFields(&newFieldsStruct{}, true)
-	require.True(t, fields[0].unique)
-	require.Empty(t, fields[0].uniqueIndexName)
 }
 
 type TestFieldsExample struct {
@@ -75,61 +68,6 @@ func TestFieldMaskMatch(t *testing.T) {
 	require.True(t, fieldMaskMatch([]StructFieldName{}, "Col1"))
 	require.True(t, fieldMaskMatch([]StructFieldName{nil}, "Col1"))
 	require.True(t, fieldMaskMatch(nil, "Col1"))
-}
-
-func TestParseTag(t *testing.T) {
-	// basic test
-	{
-		expect := []tag{{key: "pk"}, {key: "unique", values: []string{"foo", "bar"}}}
-		tags, err := parseTags("pk,unique(foo,bar)")
-		require.NoError(t, err)
-		require.Equal(t, expect, tags)
-	}
-
-	// empty values
-	{
-		expect := []tag{{key: "pk"}, {key: "unique"}}
-		tags, err := parseTags("pk,unique()")
-		require.NoError(t, err)
-		require.Equal(t, expect, tags)
-	}
-
-	// add some whitespace
-	{
-		expect := []tag{{key: "pk"}, {key: "unique", values: []string{"f o o", "b a r"}}}
-		tags, err := parseTags(" pk , unique ( f o o , b a r )")
-		require.NoError(t, err)
-		require.Equal(t, expect, tags)
-	}
-
-	// add some whitespace inside single quotes
-	{
-		expect := []tag{{key: " pk "}, {key: " unique ", values: []string{" foo ", " bar "}}}
-		tags, err := parseTags(" ' pk ' , ' unique ' (' foo ', ' bar ' )  ")
-		require.NoError(t, err)
-		require.Equal(t, expect, tags)
-	}
-
-	// don't split by comma inside value when inside single quotes
-	{
-		expect := []tag{{key: "p,k"}, {key: "uni,que", values: []string{"foo", "ba,r"}}}
-		tags, err := parseTags(`'p,k','uni,que'(foo,'ba,r')`)
-		require.NoError(t, err)
-		require.Equal(t, expect, tags)
-	}
-
-	// bogus
-	_, err := parseTags(`pk)`)
-	require.Error(t, err)
-
-	_, err = parseTags(`pk,)`)
-	require.Error(t, err)
-
-	_, err = parseTags(`pk(foo(`)
-	require.Error(t, err)
-
-	_, err = parseTags(`pk(())`)
-	require.Error(t, err)
 }
 
 type TestGlobalStructsName_Struct struct{}

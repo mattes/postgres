@@ -309,28 +309,30 @@ func (p *Postgres) ensureTable(r *metaStruct) error {
 func (p *Postgres) ensureForeignKeys(r *metaStruct) error {
 	// ensure foreign keys
 	for _, f := range r.fields {
-		if f.referencesStruct != "" && len(f.referencesFields) > 0 {
+		if f.foreignKeys != nil {
+			for _, fk := range f.foreignKeys {
 
-			refTbl, err := p.describeTable(toSnake(f.referencesStruct))
-			if err != nil {
-				return err
-			}
-
-			// add unique index on referenced columns
-			if !refTbl.hasUniqueIndexByColumns(f.referencesFields) {
-				if err := p.createIndex(toSnake(f.referencesStruct, f.referencesFields[0], "unique"), f.referencesStruct, f.referencesFields, true, !r.fields.hasPartitionedField()); err != nil {
+				refTbl, err := p.describeTable(toSnake(fk.structName))
+				if err != nil {
 					return err
 				}
-			}
 
-			// add missing foreign keys
-			exists, err := p.constraintExists(toSnake(r.name, f.name, "fk"))
-			if err != nil {
-				return err
-			}
-			if !exists {
-				if err := p.addForeignKey(toSnake(r.name), toSnake(r.name, f.name, "fk"), []string{f.name}, f.referencesStruct, f.referencesFields); err != nil {
+				// add unique index on referenced columns
+				if !refTbl.hasUniqueIndexByColumns(fk.fieldNames) {
+					if err := p.createIndex(toSnake(fk.structName, join(fk.fieldNames), "unique"), fk.structName, fk.fieldNames, true, !r.fields.hasPartitionedField()); err != nil {
+						return err
+					}
+				}
+
+				// add missing foreign keys
+				exists, err := p.constraintExists(toSnake(r.name, f.name, "fk"))
+				if err != nil {
 					return err
+				}
+				if !exists {
+					if err := p.addForeignKey(toSnake(r.name), toSnake(r.name, f.name, "fk"), []string{f.name}, fk.structName, fk.fieldNames); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -412,7 +414,7 @@ func (p *Postgres) createTable(r *metaStruct) error {
 	// partition by range
 	partitionByRangeFields := make([]string, 0)
 	for _, f := range r.fields {
-		if f.partitionByRange {
+		if f.partitionByRange != nil {
 			partitionByRangeFields = append(partitionByRangeFields, f.name)
 		}
 	}

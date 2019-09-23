@@ -107,17 +107,54 @@ versions are stopped and removed.
 
 ## Struct tags
 
-This package will pick up `db` struct tags to create migrations and queries for primary keys, index and foreign keys. The following struct tags are supported:
+This package will pick up `db` struct tags to build queries and create migrations. The following struct tags are supported:
 
-| Struct Tag | Description |
-|-----------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| `db:"pk"` | Create a primary key. Can be used across multiple fields to create a composite primary key. |
-| `db:"references(structName.fieldName)"` | Creates a foreign key. |
-| `db:"index"` | Creates an index for a field. |
-| `db:"index(name)"` | Creates an index with given name. Can be used across multiple fields to create a composite index. |
-| `db:"unique"` | Creates a unique index for a field. |
-| `db:"unique(name)"` | Creates a unique index with given name. Can be used across multiple fields to create composite unique index. |
-| `db:"pk,partitionByRange"` | [Partitions table by range](https://www.postgresql.org/docs/11/ddl-partitioning.html) for given field. Requires `pk` at the same time. |
+### Primary Keys
+
+```go
+// Column becomes primary key
+Col string `db:"pk"` 
+
+// Col1 and Col2 become composite primary key
+Col1 string `db:"pk(name=mypk, method=hash, order=desc, composite={Col2}"` 
+Col2 string
+```
+
+### Foreign Keys
+
+```go
+// Column references A.Col
+Col string `db:"references(struct=A, field=Col)"`
+
+// Column references A.Col1 and A.Col2
+Col string `db:"references(struct=A, fields={Col1, Col2})"`
+```
+
+### Indexes
+
+```go
+// Column has index
+Col string `db:"index"`
+
+// Column has composite index
+Col1 string `db:"index(name=myindex, method=hash, order=desc, composite={Col2}"`
+Col2 string
+
+// Column has unique index
+Col string `db:"unique"`
+
+// Column has unique composite index
+Col1 string `db:"unique(name=myindex, method=hash, order=desc, composite={Col2}"`
+Col2 string
+```
+
+### Table Partitions
+
+Partitions table by range, see [docs](https://www.postgresql.org/docs/11/ddl-partitioning.html).
+
+```go
+CreatedAt time.Time `db:"pk,partitionByRange"`
+```
 
 ## Testing
 

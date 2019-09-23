@@ -170,7 +170,7 @@ func updateStruct(db db, ctx context.Context, s Struct, fieldMask ...StructField
 	query := fmt.Sprintf(queryf,
 		mustIdentifier(r.alias()),
 		mustJoinIdentifiers(r.fields.nonPrimaryNames(fieldMask...)),
-		join(p.assign(r.fields.nonPrimary(fieldMask...)...)),
+		join(p.assign(r.fields.nonPrimaryFields(fieldMask...)...)),
 		r.fields.wherePrimaryStr(p),
 		mustJoinIdentifiers(r.fields.names()),
 	)

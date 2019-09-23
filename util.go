@@ -57,6 +57,15 @@ func equalStringSlice(a, b []string) bool {
 	return true
 }
 
+func stringSliceContains(slice []string, find string) bool {
+	for _, x := range slice {
+		if strings.EqualFold(x, find) {
+			return true
+		}
+	}
+	return false
+}
+
 // equalStringSliceIgnoreOrder returns true if two string slices are the same,
 // ignoring the order of their content.
 func equalStringSliceIgnoreOrder(a, b []string) bool {
@@ -80,6 +89,25 @@ func equalStringSliceIgnoreOrder(a, b []string) bool {
 	}
 
 	return true
+}
+
+func removeFromStringSlice(old []string, remove string) []string {
+	if old == nil {
+		return nil
+	}
+
+	if len(old) == 0 {
+		return old
+	}
+
+	x := make([]string, 0, len(old))
+	for i := 0; i < len(old); i++ {
+		if !strings.EqualFold(old[i], remove) {
+			x = append(x, old[i])
+		}
+	}
+
+	return x
 }
 
 func isErrTableDoesNotExist(err error) bool {

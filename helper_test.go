@@ -32,6 +32,9 @@ func init() {
 
 	// initialize database connection and User{} for example_test.go
 	RegisterWithPrefix(&User{}, "user", "u")
+
+	// increase max identifier length for tests
+	MaxIdentifierLength = 1000
 }
 
 type stdoutLogger struct{}
@@ -127,4 +130,20 @@ func mustNewMetaStruct(v interface{}) *metaStruct {
 func requirePQError(t *testing.T, err error, codeName string) {
 	require.IsType(t, &pq.Error{}, err)
 	require.Equal(t, codeName, err.(*pq.Error).Code.Name())
+}
+
+func stringPtr(x string) *string {
+	return &x
+}
+
+func intPtr(x int) *int {
+	return &x
+}
+
+func float64Ptr(x float64) *float64 {
+	return &x
+}
+
+func boolPtr(x bool) *bool {
+	return &x
 }

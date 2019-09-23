@@ -18,6 +18,11 @@ var (
 	structsMu sync.RWMutex
 )
 
+// Register registers a struct. Optional alias has to be globally unique.
+func Register(s Struct, alias string) {
+	RegisterWithPrefix(s, alias, "")
+}
+
 // RegisterWithPrefix registers a struct. Optional alias has to be globally unique.
 // Optional prefixID is used in NewID().
 func RegisterWithPrefix(s Struct, alias string, prefixID string) {
@@ -55,11 +60,6 @@ func RegisterWithPrefix(s Struct, alias string, prefixID string) {
 	structs[globalStructsName(s)] = x
 }
 
-// Register registers a struct. Optional alias has to be globally unique.
-func Register(s Struct, alias string) {
-	RegisterWithPrefix(s, alias, "")
-}
-
 // StructFieldName defines a struct's field name where interface{} must be
 // "resolvable" as string.
 type StructFieldName interface{}
@@ -85,22 +85,11 @@ type field struct {
 	name  string
 	value reflect.Value
 
-	primary bool
-
-	// unique(indexName)
-	unique          bool
-	uniqueIndexName string
-
-	// index(indexName)
-	index     bool
-	indexName string
-
-	// references(table.column)
-	referencesStruct string
-	referencesFields []string
-
-	// partitionByRange
-	partitionByRange bool
+	// data parsed from struct tag
+	primaryKey       *primaryKeyStructTag
+	foreignKeys      []foreignKeyStructTag
+	indexes          []indexStructTag
+	partitionByRange *partitionByRangeStructTag
 }
 
 func newMetaStruct(v interface{}) (*metaStruct, error) {
@@ -129,11 +118,7 @@ func newFields(v interface{}, withTags bool) (fields, error) {
 		f[i].value = val.Field(i)
 
 		if withTags {
-			tags, err := parseTags(typ.Field(i).Tag.Get(StructTag))
-			if err != nil {
-				return nil, err
-			}
-			if err := f[i].assignTags(tags); err != nil {
+			if err := f[i].parseStructTag(typ.Field(i).Tag.Get(StructTag)); err != nil {
 				return nil, err
 			}
 		}
@@ -191,14 +176,35 @@ func (f fields) values(fieldMask ...StructFieldName) []interface{} {
 	return out
 }
 
+func (f fields) primaryFields(fieldMask ...StructFieldName) []*field {
+	out := make([]*field, 0, len(f))
+
+	for i := 0; i < len(f); i++ {
+		if f[i].primaryKey != nil && fieldMaskMatch(fieldMask, f[i].name) {
+			out = append(out, f[i])
+		}
+
+		// append composite primary keys
+		if f[i].primaryKey != nil {
+			for _, name := range f[i].primaryKey.composite {
+				fx := f.mustFindByName(name)
+				if fieldMaskMatch(fieldMask, fx.name) {
+					out = append(out, fx)
+				}
+			}
+		}
+	}
+
+	return out
+}
+
 // primaryNames returns field's names where field is a primary key,
 // based on given fieldmask
 func (f fields) primaryNames(fieldMask ...StructFieldName) []string {
-	out := make([]string, 0, len(f))
-	for i := 0; i < len(f); i++ {
-		if f[i].primary && fieldMaskMatch(fieldMask, f[i].name) {
-			out = append(out, f[i].name)
-		}
+	pf := f.primaryFields(fieldMask...)
+	out := make([]string, 0, len(pf))
+	for _, field := range pf {
+		out = append(out, field.name)
 	}
 	return out
 }
@@ -206,64 +212,75 @@ func (f fields) primaryNames(fieldMask ...StructFieldName) []string {
 // primaryValues returns field's values where field is a primary key,
 // based on given fieldmask
 func (f fields) primaryValues(fieldMask ...StructFieldName) []interface{} {
-	out := make([]interface{}, 0, len(f))
-	for i := 0; i < len(f); i++ {
-		if f[i].primary && fieldMaskMatch(fieldMask, f[i].name) {
-			out = append(out, f[i])
-		}
+	pf := f.primaryFields(fieldMask...)
+	out := make([]interface{}, 0, len(pf))
+	for _, field := range pf {
+		out = append(out, field)
 	}
 	return out
 }
 
-// nonPrimary returns fields where field is not a primary key,
+// nonPrimaryFields returns fields where field is not a primary key,
 // based on given fieldmask
-func (f fields) nonPrimary(fieldMask ...StructFieldName) []*field {
+func (f fields) nonPrimaryFields(fieldMask ...StructFieldName) []*field {
 	out := make([]*field, 0, len(f))
 	for i := 0; i < len(f); i++ {
-		if !f[i].primary && fieldMaskMatch(fieldMask, f[i].name) {
-			out = append(out, f[i])
+		if f[i].primaryKey == nil && fieldMaskMatch(fieldMask, f[i].name) {
+
+			// make sure field is not part of composite key
+			found := false
+			for j := 0; j < len(f); j++ {
+				if f[j].primaryKey != nil && stringSliceContains(f[j].primaryKey.composite, f[i].name) {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				out = append(out, f[i])
+			}
 		}
 	}
+
 	return out
 }
 
 // nonPrimaryNames returns field's names where field is a not a primary key,
 // based on given fieldmask
 func (f fields) nonPrimaryNames(fieldMask ...StructFieldName) []string {
-	out := make([]string, 0, len(f))
-	for i := 0; i < len(f); i++ {
-		if !f[i].primary && fieldMaskMatch(fieldMask, f[i].name) {
-			out = append(out, f[i].name)
-		}
+	npf := f.nonPrimaryFields(fieldMask...)
+	out := make([]string, 0, len(npf))
+	for _, field := range npf {
+		out = append(out, field.name)
 	}
 	return out
 }
 
 func (f fields) wherePrimaryStr(p *placeholderMap) string {
-	out := make([]string, 0, len(f))
-	for i := 0; i < len(f); i++ {
-		if f[i].primary {
-			out = append(out, fmt.Sprintf("%v = %v", mustIdentifier(f[i].name), p.next(f[i])))
-		}
+	pf := f.primaryFields(nil)
+	out := make([]string, 0, len(pf))
+	for _, x := range pf {
+		out = append(out, fmt.Sprintf("%v = %v", mustIdentifier(x.name), p.next(x)))
 	}
 	return strings.Join(out, " AND ")
 }
 
+// uniqueIndexes returns map of unique indexes and it columns/ fields
 func (f fields) uniqueIndexes() map[string][]string {
 	out := make(map[string][]string)
 	for _, x := range f {
-		if x.unique {
+
+		for _, index := range x.indexes {
+			if !index.unique {
+				continue
+			}
 
 			// dynamically create index name if not set
-			if x.uniqueIndexName == "" {
-				x.uniqueIndexName = fmt.Sprintf("%v_unique", x.name)
+			if index.name == "" {
+				index.name = fmt.Sprintf("%v_unique", strings.Join(append([]string{x.name}, index.composite...), "_"))
 			}
 
-			if _, ok := out[x.uniqueIndexName]; !ok {
-				out[x.uniqueIndexName] = []string{x.name}
-			} else {
-				out[x.uniqueIndexName] = append(out[x.uniqueIndexName], x.name)
-			}
+			out[index.name] = append([]string{x.name}, index.composite...)
 		}
 	}
 
@@ -273,17 +290,25 @@ func (f fields) uniqueIndexes() map[string][]string {
 func (f fields) indexes() map[string][]string {
 	out := make(map[string][]string)
 	for _, x := range f {
-		if x.index {
 
-			// dynamically create index name if not set
-			if x.indexName == "" {
-				x.indexName = fmt.Sprintf("%v_index", x.name)
+		for _, index := range x.indexes {
+			if index.unique {
+				continue
 			}
 
-			if _, ok := out[x.indexName]; !ok {
-				out[x.indexName] = []string{x.name}
+			// dynamically create index name if not set
+			if index.name == "" {
+				index.name = fmt.Sprintf("%v_index", strings.Join(append([]string{x.name}, index.composite...), "_"))
+			}
+
+			if _, ok := out[index.name]; !ok {
+				out[index.name] = []string{x.name}
 			} else {
-				out[x.indexName] = append(out[x.indexName], x.name)
+				out[index.name] = append(out[index.name], x.name)
+			}
+
+			if len(index.composite) > 0 {
+				out[index.name] = append(out[index.name], index.composite...)
 			}
 		}
 	}
@@ -313,11 +338,34 @@ func (f fields) Scan(row rowScan) error {
 
 func (f fields) hasPartitionedField() bool {
 	for _, x := range f {
-		if x.partitionByRange {
+		if x.partitionByRange != nil {
 			return true
 		}
 	}
 	return false
+}
+
+func (f fields) findByName(name string) *field {
+	if name == "" {
+		return nil
+	}
+
+	for i := 0; i < len(f); i++ {
+		if strings.EqualFold(f[i].name, name) {
+			return f[i]
+		}
+	}
+
+	return nil
+}
+
+func (f fields) mustFindByName(name string) *field {
+	x := f.findByName(name)
+	if x == nil {
+		panic(fmt.Sprintf("field '%v' does not exist", name))
+	}
+
+	return x
 }
 
 func (f *field) String() string {
@@ -347,51 +395,6 @@ func (f *field) columnType() string {
 	return columnType(f.value.Interface())
 }
 
-func (f *field) assignTags(tags []tag) error {
-	for _, t := range tags {
-		switch t.key {
-		case "pk":
-			f.primary = true
-
-		case "unique":
-			f.unique = true
-
-			if len(t.values) == 1 {
-				f.uniqueIndexName = t.values[0]
-			} else if len(t.values) > 1 {
-				return fmt.Errorf("field %v has too many values for tag 'unique'", f.name)
-			}
-
-		case "index":
-			f.index = true
-			if len(t.values) == 1 {
-				f.indexName = t.values[0]
-
-			} else if len(t.values) > 1 {
-				return fmt.Errorf("field %v has too many values for tag 'index'", f.name)
-			}
-
-		case "references":
-			if len(t.values) != 1 {
-				return fmt.Errorf("field %v has too many values for tag 'references'", f.name)
-			}
-
-			parts := strings.SplitN(t.values[0], ".", 2)
-			if len(parts) != 2 {
-				return fmt.Errorf("field %v has invalid tag 'references'", f.name)
-			}
-
-			f.referencesStruct = parts[0]
-			f.referencesFields = []string{parts[1]}
-
-		case "partitionByRange":
-			f.partitionByRange = true
-		}
-	}
-
-	return nil
-}
-
 // fieldMaskMatch returns true if given fieldMask is empty or
 // if searched field is present in fieldMask.
 func fieldMaskMatch(fieldMask []StructFieldName, name string) bool {
@@ -419,102 +422,6 @@ func isEmptyFieldMask(fieldMask []StructFieldName) bool {
 type tag struct {
 	key    string
 	values []string
-}
-
-// parseTag parses the part within the quotes of a struct tag like:
-// `db:"pk,unique(foo,bar)"`
-func parseTags(in string) ([]tag, error) {
-	if len(in) == 0 {
-		return []tag{}, nil
-	}
-
-	tags := make([]tag, 0)
-	var splitErr error
-
-	// helper func to split key/value pairs,
-	// essentially ignore commas inside key/value pair
-	insideValues := false
-	insideKey := false
-	splitPairs := func(c rune) bool {
-		switch c {
-		case '\'':
-			insideKey = !insideKey
-
-		case '(':
-			if insideValues {
-				splitErr = fmt.Errorf("invalid tag")
-				return false
-			}
-			insideValues = true
-
-		case ')':
-			if !insideValues {
-				splitErr = fmt.Errorf("invalid tag")
-				return false
-			}
-			insideValues = false
-
-		case ',':
-			return !insideValues && !insideKey
-
-		}
-		return false
-	}
-
-	insideValue := false
-	splitValues := func(c rune) bool {
-		switch c {
-		case '\'':
-			insideValue = !insideValue
-
-		case ',':
-			return !insideValue
-
-		}
-		return false
-	}
-
-	// split key/value pairs
-	for _, pair := range strings.FieldsFunc(in, splitPairs) {
-		pair = strings.TrimSpace(pair)
-
-		// split a single key/value pair
-		kv := strings.Split(pair, "(")
-		if len(kv) == 1 {
-			// key only
-			key := strings.Trim(strings.TrimSpace(kv[0]), "'")
-			tags = append(tags, tag{key: key})
-
-		} else if len(kv) == 2 {
-			// key and value
-			values := strings.FieldsFunc(strings.TrimRight(kv[1], ")"), splitValues)
-			trimmedValues := make([]string, 0, len(values))
-			for _, v := range values {
-				v = strings.TrimSpace(v)
-				if len(v) > 0 {
-					v = strings.Trim(v, "'")
-					trimmedValues = append(trimmedValues, v)
-				}
-			}
-
-			if len(trimmedValues) == 0 {
-				trimmedValues = nil
-			}
-
-			key := strings.Trim(strings.TrimSpace(kv[0]), "'")
-			tags = append(tags, tag{key: key, values: trimmedValues})
-
-		} else {
-			return nil, fmt.Errorf("invalid tag")
-		}
-	}
-
-	// catching error from split funcs
-	if splitErr != nil {
-		return nil, splitErr
-	}
-
-	return tags, nil
 }
 
 func globalStructsName(s Struct) string {

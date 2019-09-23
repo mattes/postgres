@@ -54,3 +54,9 @@ func TestUnquoteIdentifiers(t *testing.T) {
 		[]string{"foo", "bar"},
 		unquoteIdentifiers([]string{`\"foo\"`, `\"bar\"`}))
 }
+
+func TestRemoveFromStringSlice(t *testing.T) {
+	require.Equal(t, []string{"a", "c"}, removeFromStringSlice([]string{"a", "b", "c"}, "b"))
+	require.Equal(t, []string{"a", "c"}, removeFromStringSlice([]string{"a", "b", "c"}, "B"))
+	require.Equal(t, []string{"a", "b", "c"}, removeFromStringSlice([]string{"a", "b", "c"}, "d"))
+}

@@ -1,3 +1,6 @@
+# github.com/alecthomas/participle v0.3.0
+github.com/alecthomas/participle
+github.com/alecthomas/participle/lexer
 # github.com/azer/snakecase v1.0.0
 github.com/azer/snakecase
 # github.com/davecgh/go-spew v1.1.1
