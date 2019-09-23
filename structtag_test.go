@@ -74,53 +74,53 @@ func TestParseStructTag(t *testing.T) {
 		},
 		{
 			// test empty list value
-			"foo(abc={})",
+			"foo(abc=[])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "foo", Args: []stArg{{Name: "abc", Value: stValue{}}}}}},
 		},
 		{
 			// test list value with spacing
-			"foo(abc = { def })",
+			"foo(abc = [ def ])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "foo", Args: []stArg{{Name: "abc", Value: stValue{List: []string{"def"}}}}}}},
 		},
 		{
 			// test list value with one element
-			"foo(abc={def})",
+			"foo(abc=[def])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "foo", Args: []stArg{{Name: "abc", Value: stValue{List: []string{"def"}}}}}}},
 		},
 		{
-			"foo(abc={'d e f'})",
+			"foo(abc=['d e f'])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "foo", Args: []stArg{{Name: "abc", Value: stValue{List: []string{"d e f"}}}}}}},
 		},
 		{
 			// test list value with two elements
-			"foo(abc={def,ghi})",
+			"foo(abc=[def,ghi])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "foo", Args: []stArg{{Name: "abc", Value: stValue{List: []string{"def", "ghi"}}}}}}},
 		},
 		{
-			"foo(abc={ def , ghi })",
+			"foo(abc=[ def , ghi ])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "foo", Args: []stArg{{Name: "abc", Value: stValue{List: []string{"def", "ghi"}}}}}}},
 		},
 		{
-			"foo(abc={' d e f ', ghi })",
+			"foo(abc=[' d e f ', ghi ])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "foo", Args: []stArg{{Name: "abc", Value: stValue{List: []string{" d e f ", "ghi"}}}}}}},
 		},
 		{
 			// test list value with three elements
-			"foo(abc={def,ghi,jkl})",
+			"foo(abc=[def,ghi,jkl])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "foo", Args: []stArg{{Name: "abc", Value: stValue{List: []string{"def", "ghi", "jkl"}}}}}}},
@@ -139,7 +139,7 @@ func TestParseStructTag(t *testing.T) {
 
 		// test actual struct tag
 		{
-			"index(method=btree, name=my_index, order=asc, composite={foo, bar})",
+			"index(method=btree, name=my_index, order=asc, composite=[foo, bar])",
 			&structTag{
 				Functions: []stFunction{
 					{Name: "index", Args: []stArg{
@@ -170,7 +170,7 @@ func TestParseStructTag(t *testing.T) {
 }
 
 func BenchmarkParseStructTag(b *testing.B) {
-	tag := "index(method=btree, name=my_index, order=asc, composite={foo, bar})"
+	tag := "index(method=btree, name=my_index, order=asc, composite=[foo, bar])"
 	for n := 0; n < b.N; n++ {
 		_, err := parseStructTag(tag)
 		if err != nil {
@@ -180,7 +180,7 @@ func BenchmarkParseStructTag(b *testing.B) {
 }
 
 func TestParseStructTag_PrimaryKey(t *testing.T) {
-	tag := `pk(method=btree, name=abc, order=asc, composite={foo, bar})`
+	tag := `pk(method=btree, name=abc, order=asc, composite=[foo, bar])`
 
 	f := &field{}
 	require.NoError(t, f.parseStructTag(tag))
@@ -195,7 +195,7 @@ func TestParseStructTag_PrimaryKey(t *testing.T) {
 }
 
 func TestParseStructTag_Indexes(t *testing.T) {
-	tag := `index(method=btree, name=abc, order=asc, composite={foo, bar}), index(name=def), unique(order=desc)`
+	tag := `index(method=btree, name=abc, order=asc, composite=[foo, bar]), index(name=def), unique(order=desc)`
 
 	f := &field{}
 	require.NoError(t, f.parseStructTag(tag))
@@ -221,7 +221,7 @@ func TestParseStructTag_Indexes(t *testing.T) {
 }
 
 func TestParseStructTag_ForeignKeys(t *testing.T) {
-	tag := `references(struct=Foo, field=Bar), references(struct=a, fields={b,c})`
+	tag := `references(struct=Foo, field=Bar), references(struct=a, fields=[b,c])`
 
 	f := field{}
 	require.NoError(t, f.parseStructTag(tag))

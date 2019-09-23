@@ -59,7 +59,7 @@ type stValue struct {
 	String *string  `  (@String|@Ident)`
 	Float  *float64 `| @Float`
 	Int    *int     `| @Int`
-	List   []string `| "{" ( (@String|@Ident) ( ","? (@String|@Ident) )* )? "}"`
+	List   []string `| "[" ( (@String|@Ident) ( ","? (@String|@Ident) )* )? "]"`
 }
 
 func parseStructTag(tag string) (*structTag, error) {

@@ -116,7 +116,7 @@ This package will pick up `db` struct tags to build queries and create migration
 Col string `db:"pk"` 
 
 // Col1 and Col2 become composite primary key
-Col1 string `db:"pk(name=mypk, method=hash, order=desc, composite={Col2}"` 
+Col1 string `db:"pk(name=mypk, method=hash, order=desc, composite=[Col2]"` 
 Col2 string
 ```
 
@@ -127,7 +127,7 @@ Col2 string
 Col string `db:"references(struct=A, field=Col)"`
 
 // Column references A.Col1 and A.Col2
-Col string `db:"references(struct=A, fields={Col1, Col2})"`
+Col string `db:"references(struct=A, fields=[Col1, Col2])"`
 ```
 
 ### Indexes
@@ -137,14 +137,14 @@ Col string `db:"references(struct=A, fields={Col1, Col2})"`
 Col string `db:"index"`
 
 // Column has composite index
-Col1 string `db:"index(name=myindex, method=hash, order=desc, composite={Col2}"`
+Col1 string `db:"index(name=myindex, method=hash, order=desc, composite=[Col2]"`
 Col2 string
 
 // Column has unique index
 Col string `db:"unique"`
 
 // Column has unique composite index
-Col1 string `db:"unique(name=myindex, method=hash, order=desc, composite={Col2}"`
+Col1 string `db:"unique(name=myindex, method=hash, order=desc, composite=[Col2]"`
 Col2 string
 ```
 

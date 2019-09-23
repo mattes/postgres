@@ -98,7 +98,7 @@ func BenchmarkGet_Plain(b *testing.B) {
 }
 
 type TestGetTable_CompositePrimaryKey_Struct struct {
-	Col1 string `db:"pk(composite={Col1, Col2})"`
+	Col1 string `db:"pk(composite=[Col1, Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -221,7 +221,7 @@ func BenchmarkInsert_Plain(b *testing.B) {
 }
 
 type TestInsert_CompositePrimaryKey_Struct struct {
-	Col1 string `db:"pk(composite={Col1, Col2})"`
+	Col1 string `db:"pk(composite=[Col1, Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -358,7 +358,7 @@ func TestUpdate(t *testing.T) {
 }
 
 type TestUpdate_CompositePrimaryKey_Struct struct {
-	Col1 string `db:"pk(composite={Col1, Col2})"`
+	Col1 string `db:"pk(composite=[Col1, Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -493,7 +493,7 @@ func TestSave_Insert(t *testing.T) {
 }
 
 type TestSave_Insert_CompositePrimaryKey_Struct struct {
-	Col1 string `db:"pk(composite={Col2})"`
+	Col1 string `db:"pk(composite=[Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -582,7 +582,7 @@ func TestSave_Update(t *testing.T) {
 }
 
 type TestSave_Update_CompositePrimaryKey_Struct struct {
-	Col1 string `db:"pk(composite={Col1, Col2})"`
+	Col1 string `db:"pk(composite=[Col1, Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -756,7 +756,7 @@ func TestDelete(t *testing.T) {
 }
 
 type TestDelete_CompositePrimaryKey_Struct struct {
-	Col1 string `db:"pk(composite={Col1, Col2})"`
+	Col1 string `db:"pk(composite=[Col1, Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -930,7 +930,7 @@ func TestEnsureTable_PrimaryKeys(t *testing.T) {
 }
 
 type TestEnsureTable_CompositePrimaryKeys_Struct struct {
-	Col1 string `db:"pk(composite={Col1, Col2})"`
+	Col1 string `db:"pk(composite=[Col1, Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -1008,7 +1008,7 @@ func TestEnsureTable_UniqueIndex(t *testing.T) {
 }
 
 type TestEnsureTable_CompositeUniqueIndex_Struct struct {
-	Col1 string `db:"unique(name=foobar, composite={Col1, Col2})"`
+	Col1 string `db:"unique(name=foobar, composite=[Col1, Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -1087,7 +1087,7 @@ func TestEnsureTable_Index(t *testing.T) {
 }
 
 type TestEnsureTable_CompositeIndex_Struct struct {
-	Col1 string `db:"index(name=foobar, composite={Col1, Col2})"`
+	Col1 string `db:"index(name=foobar, composite=[Col1, Col2])"`
 	Col2 string
 	Col3 string
 }
@@ -1160,7 +1160,7 @@ func TestEnsureTable_ForeignKey(t *testing.T) {
 }
 
 type TestEnsureTable_PartitionByRange_Struct struct {
-	Col1 string `db:"pk(composite={Col1, Col2})"`
+	Col1 string `db:"pk(composite=[Col1, Col2])"`
 	Col2 string `db:"partitionByRange"`
 }
 
@@ -1232,7 +1232,7 @@ func TestAdvisoryLocks(t *testing.T) {
 }
 
 type TestDescribeTableIndexes_Struct struct {
-	Col1      string `db:"pk(composite={Col1, Timestamp})"`
+	Col1      string `db:"pk(composite=[Col1, Timestamp])"`
 	Timestamp string // timestamp is also postgres identifier
 }
 
@@ -1255,7 +1255,7 @@ func TestDescribeTableIndexes(t *testing.T) {
 }
 
 type TestDescribeTableColumns_Struct struct {
-	Col1      string `db:"pk(composite={Col1, Timestamp})"`
+	Col1      string `db:"pk(composite=[Col1, Timestamp])"`
 	Timestamp string // timestamp is also postgres identifier
 }
 
