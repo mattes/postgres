@@ -1,6 +1,6 @@
 module github.com/mattes/postgres
 
-go 1.12
+go 1.13
 
 require (
 	github.com/alecthomas/participle v0.3.0

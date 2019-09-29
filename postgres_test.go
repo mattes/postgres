@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"strconv"
 	"testing"
 	"time"
 
@@ -1229,6 +1231,56 @@ func TestAdvisoryLocks(t *testing.T) {
 	time.Sleep(250 * time.Millisecond) // make sure it's closed
 	require.NoError(t, db2.advisoryLock(key))
 	require.NoError(t, db2.advisoryUnlock(key))
+}
+
+func TestAdvisoryLocks_DifferentConnections(t *testing.T) {
+	db1, err := Open(postgresURI)
+	require.NoError(t, err)
+
+	db1.advisoryUnlockAll() // just to make sure
+
+	key := MigrateKey - 2 // random key
+
+	// create two connections
+	conn1, err := db1.db.Conn(context.Background())
+	require.NoError(t, err)
+
+	conn2, err := db1.db.Conn(context.Background())
+	require.NoError(t, err)
+
+	// make sure it's really two different connections
+	pidConn1 := queryPostgresBackendPid(t, conn1)
+	pidConn2 := queryPostgresBackendPid(t, conn2)
+	require.NotEqual(t, pidConn1, pidConn2)
+
+	// now acquire lock on first connection
+	{
+		row := conn1.QueryRowContext(context.Background(), "SELECT pg_try_advisory_lock("+strconv.Itoa(key)+")")
+		var b postgresBool
+		if err := row.Scan(&b); err != nil {
+			require.NoError(t, err)
+		}
+		require.True(t, bool(b))
+	}
+
+	// and then try to acquire lock on second connection (which should fail)
+	{
+		row := conn2.QueryRowContext(context.Background(), "SELECT pg_try_advisory_lock("+strconv.Itoa(key)+")")
+		var b postgresBool
+		if err := row.Scan(&b); err != nil {
+			require.NoError(t, err)
+		}
+		require.False(t, bool(b))
+	}
+}
+
+func queryPostgresBackendPid(t *testing.T, conn *sql.Conn) string {
+	var pid string
+	row := conn.QueryRowContext(context.Background(), "SELECT pg_backend_pid()")
+	if err := row.Scan(&pid); err != nil {
+		require.NoError(t, err)
+	}
+	return pid
 }
 
 type TestDescribeTableIndexes_Struct struct {
