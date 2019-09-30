@@ -31,6 +31,7 @@ type rowScan interface {
 }
 
 type Postgres struct {
+	uri    string
 	db     *sql.DB
 	Logger Logger
 
@@ -69,6 +70,7 @@ func Open(uri string) (*Postgres, error) {
 	}
 
 	p := &Postgres{
+		uri:              uri,
 		db:               db,
 		createTempTables: extra.createTempTables,
 	}
@@ -84,6 +86,18 @@ func Open(uri string) (*Postgres, error) {
 	}
 
 	return p, nil
+}
+
+// clone creates a new instance of *Postgres.
+// The new *Postgres instance has its own new connection pool.
+func (p *Postgres) clone() (*Postgres, error) {
+	px, err := Open(p.uri)
+	if err != nil {
+		return nil, err
+	}
+
+	px.Logger = p.Logger
+	return px, nil
 }
 
 // Close closes the database and prevents new queries from starting.
@@ -121,7 +135,7 @@ func (p *Postgres) SetConnMaxLifetime(d time.Duration) {
 // The default max idle connections is currently 2. This may change in
 // a future release.
 func (p *Postgres) SetMaxIdleConns(n int) {
-	p.SetMaxIdleConns(n)
+	p.db.SetMaxIdleConns(n)
 }
 
 // SetMaxOpenConns sets the maximum number of open connections to the database.
@@ -133,7 +147,7 @@ func (p *Postgres) SetMaxIdleConns(n int) {
 // If n <= 0, then there is no limit on the number of open connections.
 // The default is 0 (unlimited).
 func (p *Postgres) SetMaxOpenConns(n int) {
-	p.SetMaxOpenConns(n)
+	p.db.SetMaxOpenConns(n)
 }
 
 // Stats returns database statistics.
@@ -193,17 +207,35 @@ func (p *Postgres) Delete(ctx context.Context, s Struct) error {
 func (p *Postgres) Migrate(ctx context.Context) error {
 	// TODO implement context.Context
 
-	p.waitForAdvisoryLock(MigrateKey)
-	defer p.advisoryUnlock(MigrateKey)
+	// create new postgres instance and only allow it to have 1 connection
+	px, err := p.clone()
+	if err != nil {
+		return err
+	}
+
+	// only allow 1 connection that is immediately closed when done
+	px.SetMaxOpenConns(1)
+	px.SetMaxIdleConns(0)
+
+	// acquire new lock on connection
+	px.waitForAdvisoryLock(MigrateKey)
+
+	// when done, release lock on same connection and close the cloned postgres instance
+	defer func() {
+		px.advisoryUnlock(MigrateKey)
+		px.Close()
+	}()
+
+	// run the following commands on same postgres connection via `px` ...
 
 	for _, r := range structs {
-		if err := p.ensureTable(r); err != nil {
+		if err := px.ensureTable(r); err != nil {
 			return err
 		}
 	}
 
 	for _, r := range structs {
-		if err := p.ensureForeignKeys(r); err != nil {
+		if err := px.ensureForeignKeys(r); err != nil {
 			return err
 		}
 	}
@@ -629,6 +661,7 @@ func (p *Postgres) advisoryLock(key int) error {
 	return ErrNoLock
 }
 
+// advisoryUnlock needs to run on same connection that acquired a lock before
 func (p *Postgres) advisoryUnlock(key int) error {
 	queryf := "SELECT pg_advisory_unlock(%v)"
 	query := fmt.Sprintf(queryf, key)
